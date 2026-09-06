@@ -139,7 +139,7 @@ p {
 
 #inicio {
     min-height: 75vh;
-    display: flex;
+    display: block;
     align-items: center;
     background:
         linear-gradient(90deg, rgba(7,7,7,.98), rgba(7,7,7,.70)),
