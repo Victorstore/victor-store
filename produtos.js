@@ -5,7 +5,7 @@ const produtos = [
         categoria: "Futebol",
         preco: 99.90,
         estoque: 10,
-        imagem: "assets/bola-futebol.jpg.jpeg"
+        imagem: "ativos/bola-futebol.jpg.jpeg"
     },
     {
         id: 2,
