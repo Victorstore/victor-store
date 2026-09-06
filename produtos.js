@@ -13,7 +13,7 @@ const produtos = [
         categoria: "Futebol",
         preco: 99.90,
         estoque: 10,
-        imagem: "assets/bola-futebol-americano.jpg.jpeg"
+        imagem: "ativos/bola-futebol-americano.jpg.jpeg"
     },
     {
         id: 3,
@@ -21,7 +21,7 @@ const produtos = [
         categoria: "Futsal",
         preco: 89.90,
         estoque: 10,
-        imagem: "assets/bola-futsal.jpg.jpeg"
+        imagem: "ativos/bola-futsal.jpg.jpeg"
     },
     {
         id: 4,
@@ -29,7 +29,7 @@ const produtos = [
         categoria: "Chuteiras",
         preco: 149.90,
         estoque: 10,
-        imagem: "assets/chuteira-branca.jpg.jpeg"
+        imagem: "ativos/chuteira-branca.jpg.jpeg"
     },
     {
         id: 5,
@@ -37,7 +37,7 @@ const produtos = [
         categoria: "Chuteiras",
         preco: 149.90,
         estoque: 10,
-        imagem: "assets/chuteira-preta.jpg.jpeg"
+        imagem: "ativos/chuteira-preta.jpg.jpeg"
     },
     {
         id: 6,
@@ -45,7 +45,7 @@ const produtos = [
         categoria: "Chuteiras",
         preco: 149.90,
         estoque: 10,
-        imagem: "assets/chuteira-vermelha.jpg.jpeg"
+        imagem: "ativos/chuteira-vermelha.jpg.jpeg"
     },
     {
         id: 7,
@@ -53,7 +53,7 @@ const produtos = [
         categoria: "Jogos",
         preco: 79.90,
         estoque: 10,
-        imagem: "assets/jogo-xadrez-dama-tabuleiro-toytrade.jpeg.webp"
+        imagem: "ativos/jogo-xadrez-dama-tabuleiro-toytrade.jpeg.webp"
     },
     {
         id: 8,
@@ -61,6 +61,6 @@ const produtos = [
         categoria: "Uniformes",
         preco: 79.90,
         estoque: 20,
-        imagem: "assets/uniforme-exemplo.jpeg"
+        imagem: "ativos/uniforme-exemplo.jpeg"
     }
 ];
