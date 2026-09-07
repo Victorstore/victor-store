@@ -741,13 +741,67 @@
             document.body.classList.remove("no-scroll");
         }
 
-        function iniciarCheckout() {
-            if (carrinho.length === 0) return;
+        
+        async function iniciarCheckout() {
+    if (carrinho.length === 0) return;
 
-            alert(
-                "Carrinho pronto! Na próxima etapa vamos conectar este botão ao Checkout Transparente do Mercado Pago."
-            );
+    const email = prompt("Digite seu e-mail para gerar o Pix:");
+
+    if (!email) {
+        alert("Informe um e-mail para continuar.");
+        return;
+    }
+
+    const total = carrinho.reduce((soma, item) => {
+        const produto = produtoPorIndice(item.indice);
+        return soma + (Number(produto.preco) * item.quantidade);
+    }, 0);
+
+    const pedido = {
+        type: "online",
+        total_amount: total.toFixed(2),
+        external_reference: "victor-store-" + Date.now(),
+        processing_mode: "automatic",
+        transactions: {
+            payments: [
+                {
+                    amount: total.toFixed(2),
+                    payment_method: {
+                        id: "pix",
+                        type: "bank_transfer"
+                    }
+                }
+            ]
+        },
+        payer: {
+            email: email
         }
+    };
+
+    try {
+        const resposta = await fetch("/api/create-order", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(pedido)
+        });
+
+        const dados = await resposta.json();
+
+        console.log("Resposta Mercado Pago:", dados);
+
+        if (!resposta.ok) {
+            alert("Não foi possível gerar o Pix. Veja o console para mais detalhes.");
+            return;
+        }
+
+        alert("Pedido enviado ao Mercado Pago com sucesso!");
+    } catch (erro) {
+        console.error(erro);
+        alert("Erro ao conectar com o Mercado Pago.");
+    }
+}
 
         document.getElementById("ano").textContent =
             new Date().getFullYear();
