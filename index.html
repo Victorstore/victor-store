@@ -790,9 +790,18 @@ if (!telefone) {
                 }
             ]
         },
-        payer: {
-            email: email
-        }
+       payer: {
+    email: email,
+    first_name: nome,
+    identification: {
+        type: "CPF",
+        number: cpf.replace(/\D/g, "")
+    },
+    phone: {
+        area_code: telefone.replace(/\D/g, "").slice(0, 2),
+        number: telefone.replace(/\D/g, "").slice(2)
+    }
+}
     };
 
     try {
