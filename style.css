@@ -40,7 +40,10 @@ a {
     margin: 0 auto;
 }
 
-/* CABEÇALHO */
+
+/* =========================
+   CABEÇALHO
+========================= */
 
 .header {
     background: rgba(7, 7, 7, 0.96);
@@ -85,7 +88,7 @@ nav a:hover {
 .btn {
     display: inline-block;
     background: #e50914;
-    color: white;
+    color: #ffffff;
     padding: 12px 20px;
     border-radius: 8px;
     font-weight: 800;
@@ -98,7 +101,10 @@ nav a:hover {
     background: #ff2633;
 }
 
-/* SEÇÕES */
+
+/* =========================
+   SEÇÕES
+========================= */
 
 section {
     padding: 75px 0;
@@ -135,7 +141,10 @@ p {
     color: #b4b4b4;
 }
 
-/* INÍCIO */
+
+/* =========================
+   INÍCIO / BANNER
+========================= */
 
 #inicio {
     display: block;
@@ -143,11 +152,17 @@ p {
 
 .hero {
     min-height: 75vh;
-    display: flex;
-    align-items: center;
     background:
-        linear-gradient(90deg, rgba(7,7,7,.98), rgba(7,7,7,.70)),
-        radial-gradient(circle at 80% 40%, #321014, #070707 55%);
+        linear-gradient(
+            90deg,
+            rgba(7, 7, 7, 0.98),
+            rgba(7, 7, 7, 0.70)
+        ),
+        radial-gradient(
+            circle at 80% 40%,
+            #321014,
+            #070707 55%
+        );
 }
 
 .hero-grid {
@@ -155,34 +170,11 @@ p {
     grid-template-columns: 1.1fr 0.9fr;
     gap: 60px;
     align-items: center;
-}
-
-.hero-card {
-    position: relative;
-    min-height: 400px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.hero-card img {
-    position: relative;
-    width: 100%;
-    max-width: 500px;
-    max-height: 380px;
-    object-fit: contain;
-    border-radius: 18px;
 }
 
 #inicio p {
     max-width: 720px;
     font-size: 17px;
-}
-.hero-grid {
-    display: grid;
-    grid-template-columns: 1.1fr 0.9fr;
-    gap: 60px;
-    align-items: center;
 }
 
 .actions {
@@ -194,7 +186,7 @@ p {
 
 .ghost {
     background: transparent;
-    border: 1px solid #555;
+    border: 1px solid #555555;
     color: #ffffff;
 }
 
@@ -213,7 +205,7 @@ p {
 
 .hero-card {
     position: relative;
-    min-height: 430px;
+    min-height: 420px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -230,13 +222,18 @@ p {
 
 .hero-card img {
     position: relative;
-    width: min(100%, 520px);
-    max-height: 390px;
+    width: 100%;
+    max-width: 500px;
+    max-height: 380px;
     object-fit: contain;
     border-radius: 18px;
     box-shadow: 0 25px 80px rgba(0, 0, 0, 0.5);
 }
-/* CATEGORIAS */
+
+
+/* =========================
+   CATEGORIAS
+========================= */
 
 .cards {
     display: grid;
@@ -267,7 +264,38 @@ p {
     margin: 0;
 }
 
-/* PRODUTOS */
+
+/* =========================
+   DESTAQUE
+========================= */
+
+.product-feature {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 55px;
+    align-items: center;
+}
+
+.product-feature img {
+    width: 100%;
+    max-height: 420px;
+    object-fit: contain;
+    border-radius: 16px;
+}
+
+.feature-copy h3 {
+    font-size: 36px;
+    margin-bottom: 15px;
+}
+
+.feature-copy p {
+    font-size: 16px;
+}
+
+
+/* =========================
+   PRODUTOS
+========================= */
 
 #produtos {
     background: #0b0b0b;
@@ -305,7 +333,7 @@ p {
 .categoria-produto {
     font-size: 11px !important;
     text-transform: uppercase;
-    color: #999 !important;
+    color: #999999 !important;
     margin: 8px 0 4px !important;
 }
 
@@ -338,7 +366,10 @@ p {
     background: #ff2633;
 }
 
-/* ORÇAMENTO */
+
+/* =========================
+   ORÇAMENTO
+========================= */
 
 .quote {
     background: #111111;
@@ -356,7 +387,7 @@ textarea,
 select {
     width: 100%;
     background: #070707;
-    color: white;
+    color: #ffffff;
     border: 1px solid #333333;
     border-radius: 8px;
     padding: 13px;
@@ -376,10 +407,19 @@ select:focus {
     border-color: transparent;
 }
 
-/* CONTATO */
+
+/* =========================
+   CONTATO
+========================= */
 
 #contato {
     background: #070707;
+}
+
+.contact-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 40px;
 }
 
 #contato a {
@@ -390,7 +430,10 @@ select:focus {
     color: #e50914;
 }
 
-/* RODAPÉ */
+
+/* =========================
+   RODAPÉ
+========================= */
 
 footer {
     border-top: 1px solid #272727;
@@ -400,9 +443,13 @@ footer {
     font-size: 13px;
 }
 
-/* CELULAR */
+
+/* =========================
+   TABLET / CELULAR
+========================= */
 
 @media (max-width: 900px) {
+
     .nav {
         flex-direction: column;
         padding: 15px 0;
@@ -412,17 +459,39 @@ footer {
         justify-content: center;
     }
 
+    .hero-grid {
+        grid-template-columns: 1fr;
+        gap: 30px;
+    }
+
+    .hero-card {
+        min-height: auto;
+    }
+
+    .hero-card img {
+        max-width: 450px;
+        margin: 0 auto;
+    }
+
     .cards,
     #lista-produtos {
         grid-template-columns: repeat(2, 1fr);
     }
 
-    .quote-grid {
+    .product-feature,
+    .quote-grid,
+    .contact-grid {
         grid-template-columns: 1fr;
     }
 }
 
+
+/* =========================
+   CELULAR PEQUENO
+========================= */
+
 @media (max-width: 600px) {
+
     section {
         padding: 55px 0;
     }
@@ -450,5 +519,18 @@ footer {
 
     h1 {
         font-size: 42px;
+    }
+
+    .hero-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .hero-card img {
+        max-width: 100%;
+    }
+
+    .actions {
+        flex-direction: column;
+        align-items: flex-start;
     }
 }
