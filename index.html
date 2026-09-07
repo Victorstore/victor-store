@@ -800,7 +800,57 @@
 const pix = pagamento?.payment_method;
 
 if (pix?.qr_code) {
-    alert("PIX GERADO!\n\nCódigo Pix Copia e Cola:\n\n" + pix.qr_code);
+    const qrBase64 = pix.qr_code_base64;
+
+    const janelaPix = window.open("", "_blank");
+
+    janelaPix.document.write(`
+        <html>
+        <head>
+            <title>Pagamento Pix - Victor Store</title>
+            <meta name="viewport" content="width=device-width, initial-scale=1">
+        </head>
+        <body style="font-family:Arial,sans-serif;text-align:center;padding:30px;background:#f5f5f5;">
+            <div style="max-width:480px;margin:auto;background:white;padding:30px;border-radius:16px;">
+                <h1>Pagamento via Pix</h1>
+                <p>Victor Store</p>
+                <h2>R$ ${total.toFixed(2).replace(".", ",")}</h2>
+
+                ${qrBase64 ? `
+                    <img
+                        src="data:image/png;base64,${qrBase64}"
+                        alt="QR Code Pix"
+                        style="width:250px;max-width:100%;"
+                    >
+                ` : ""}
+
+                <p><strong>Escaneie o QR Code ou copie o código Pix:</strong></p>
+
+                <textarea
+                    id="codigoPix"
+                    readonly
+                    style="width:100%;height:100px;padding:10px;box-sizing:border-box;"
+                >${pix.qr_code}</textarea>
+
+                <br><br>
+
+                <button
+                    onclick="navigator.clipboard.writeText(document.getElementById('codigoPix').value);this.innerText='Código copiado!';"
+                    style="padding:15px 25px;background:#e30613;color:white;border:0;border-radius:8px;font-size:16px;cursor:pointer;"
+                >
+                    Copiar código Pix
+                </button>
+
+                <p style="margin-top:25px;font-size:13px;color:#666;">
+                    Ambiente de teste do Mercado Pago
+                </p>
+            </div>
+        </body>
+        </html>
+    `);
+
+    janelaPix.document.close();
+
 } else {
     console.log("Dados do pagamento Pix:", pagamento);
     alert("Pedido criado, mas o QR Code Pix não foi encontrado. Veja o console.");
