@@ -138,12 +138,40 @@ p {
 /* INÍCIO */
 
 #inicio {
+    display: block;
+}
+
+.hero {
     min-height: 75vh;
-   display: flex;
+    display: flex;
     align-items: center;
     background:
         linear-gradient(90deg, rgba(7,7,7,.98), rgba(7,7,7,.70)),
         radial-gradient(circle at 80% 40%, #321014, #070707 55%);
+}
+
+.hero-grid {
+    display: grid;
+    grid-template-columns: 1.1fr 0.9fr;
+    gap: 60px;
+    align-items: center;
+}
+
+.hero-card {
+    position: relative;
+    min-height: 400px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.hero-card img {
+    position: relative;
+    width: 100%;
+    max-width: 500px;
+    max-height: 380px;
+    object-fit: contain;
+    border-radius: 18px;
 }
 
 #inicio p {
