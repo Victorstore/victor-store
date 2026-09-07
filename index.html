@@ -745,12 +745,29 @@
         async function iniciarCheckout() {
     if (carrinho.length === 0) return;
 
-    const email = prompt("Digite seu e-mail para gerar o Pix:");
+    const nome = prompt("Digite seu nome completo:");
+if (!nome) {
+    alert("Informe seu nome para continuar.");
+    return;
+}
 
-    if (!email) {
-        alert("Informe um e-mail para continuar.");
-        return;
-    }
+const cpf = prompt("Digite seu CPF:");
+if (!cpf) {
+    alert("Informe seu CPF para continuar.");
+    return;
+}
+
+const email = prompt("Digite seu e-mail:");
+if (!email) {
+    alert("Informe seu e-mail para continuar.");
+    return;
+}
+
+const telefone = prompt("Digite seu telefone com DDD:");
+if (!telefone) {
+    alert("Informe seu telefone para continuar.");
+    return;
+}
 
     const total = carrinho.reduce((soma, item) => {
         const produto = produtoPorIndice(item.indice);
