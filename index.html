@@ -796,7 +796,15 @@
             return;
         }
 
-        alert("Pedido enviado ao Mercado Pago com sucesso!");
+       const pagamento = dados.transactions?.payments?.[0];
+const pix = pagamento?.payment_method;
+
+if (pix?.qr_code) {
+    alert("PIX GERADO!\n\nCódigo Pix Copia e Cola:\n\n" + pix.qr_code);
+} else {
+    console.log("Dados do pagamento Pix:", pagamento);
+    alert("Pedido criado, mas o QR Code Pix não foi encontrado. Veja o console.");
+}
     } catch (erro) {
         console.error(erro);
         alert("Erro ao conectar com o Mercado Pago.");
