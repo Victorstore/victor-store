@@ -8,7 +8,7 @@
     <title>Victor Store | Materiais Esportivos</title>
 
     <meta name="description"
-        content="Victor Store — materiais esportivos, uniformes e artigos para esporte em Crateús-CE. Solicite seu orçamento pelo WhatsApp.">
+        content="Victor Store — materiais esportivos, uniformes e artigos para esporte em Crateús-CE. Compre online ou solicite seu orçamento pelo WhatsApp.">
 
     <link rel="icon" href="assets/logo-nova.jpeg">
 
@@ -19,14 +19,13 @@
         href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&display=swap"
         rel="stylesheet">
 
-    <link rel="stylesheet" href="style.css?=4">
+    <link rel="stylesheet" href="style.css?=5">
 </head>
 
 <body>
 
     <!-- CABEÇALHO -->
     <header class="header">
-
         <div class="container nav">
 
             <a class="brand" href="#inicio">
@@ -38,33 +37,26 @@
                 <a href="#inicio">Início</a>
                 <a href="#categorias">Categorias</a>
                 <a href="#destaques">Destaques</a>
+                <a href="#catalogo">Catálogo</a>
                 <a href="#produtos">Produtos</a>
                 <a href="#orcamento">Orçamento</a>
                 <a href="#contato">Contato</a>
             </nav>
 
-            <a class="nav-btn"
-                href="https://wa.me/5588997789507?text=Ol%C3%A1%2C%20vim%20pelo%20site%20da%20Victor%20Store%20e%20gostaria%20de%20um%20or%C3%A7amento."
-                target="_blank"
-                rel="noopener">
-                WhatsApp
-            </a>
+            <button class="cart-button" type="button" onclick="abrirCarrinho()">
+                🛒 Carrinho <span id="cart-count">0</span>
+            </button>
 
         </div>
-
     </header>
-
 
     <main id="inicio">
 
-
         <!-- INÍCIO -->
         <section class="hero">
-
             <div class="container hero-grid">
 
                 <div>
-
                     <span class="eyebrow">
                         MATERIAIS ESPORTIVOS • CRATEÚS/CE
                     </span>
@@ -77,71 +69,52 @@
 
                     <p>
                         Materiais esportivos, uniformes e soluções para equipes,
-                        escolas, empresas e instituições. Peça seu orçamento
-                        de forma rápida pelo WhatsApp.
+                        escolas, empresas e instituições. Agora você também pode
+                        montar seu carrinho diretamente no site.
                     </p>
 
                     <div class="actions">
-
-                        <a class="btn primary" href="#categorias">
-                            Ver categorias
+                        <a class="btn primary" href="#produtos">
+                            Ver produtos
                         </a>
 
-                        <a class="btn ghost"
-                            href="https://wa.me/5588997789507?text=Ol%C3%A1%2C%20gostaria%20de%20solicitar%20um%20or%C3%A7amento%20na%20Victor%20Store."
-                            target="_blank"
-                            rel="noopener">
-                            Solicitar orçamento →
+                        <a class="btn ghost" href="#catalogo">
+                            Ver catálogo →
                         </a>
-
                     </div>
 
                     <div class="trust">
                         <span>✓ Atendimento personalizado</span>
-                        <span>✓ Orçamentos pelo WhatsApp</span>
+                        <span>✓ Carrinho no site</span>
                         <span>✓ Atendimento a instituições</span>
                     </div>
-
                 </div>
 
-
                 <div class="hero-card">
-
                     <div class="glow"></div>
-
                     <img src="assets/chuteiras-destaque.jpeg"
-                        alt="Logo Victor Store">
-
+                        alt="Chuteiras esportivas Victor Store">
                 </div>
 
             </div>
-
         </section>
-
-
 
         <!-- CATEGORIAS -->
         <section id="categorias" class="section">
-
             <div class="container">
 
                 <div class="section-head">
-
                     <div>
                         <span class="eyebrow">O QUE VOCÊ PROCURA?</span>
                         <h2>Categorias</h2>
                     </div>
 
                     <p>
-                        Monte seu pedido e fale com nossa equipe para consultar
-                        disponibilidade, tamanhos e valores.
+                        Escolha uma categoria ou consulte todos os itens no catálogo.
                     </p>
-
                 </div>
 
-
                 <div class="cards">
-
                     <a class="card" href="#produtos">
                         <div class="icon">⚽</div>
                         <h3>Futebol & Futsal</h3>
@@ -160,13 +133,13 @@
                         <p>Conjuntos esportivos e camisas personalizadas.</p>
                     </a>
 
-                    <a class="card" href="#orcamento">
+                    <a class="card" href="#produtos">
                         <div class="icon">🏆</div>
                         <h3>Troféus & Medalhas</h3>
                         <p>Premiações para torneios, eventos e campeonatos.</p>
                     </a>
 
-                    <a class="card" href="#orcamento">
+                    <a class="card" href="#produtos">
                         <div class="icon">🧸</div>
                         <h3>Brinquedos & Recreação</h3>
                         <p>Itens recreativos para escolas e projetos.</p>
@@ -177,22 +150,15 @@
                         <h3>Instituições</h3>
                         <p>Atendimento para escolas, empresas e órgãos públicos.</p>
                     </a>
-
                 </div>
-
             </div>
-
         </section>
-
-
 
         <!-- DESTAQUES -->
         <section id="destaques" class="section dark">
-
             <div class="container">
 
                 <div class="section-head">
-
                     <div>
                         <span class="eyebrow">DESTAQUE</span>
                         <h2>Uniformes esportivos</h2>
@@ -204,9 +170,7 @@
                         rel="noopener">
                         Consultar no WhatsApp →
                     </a>
-
                 </div>
-
 
                 <div class="product-feature">
 
@@ -214,14 +178,9 @@
                         alt="Exemplo de uniforme esportivo personalizado">
 
                     <div class="feature-copy">
+                        <span class="pill">PERSONALIZAÇÃO</span>
 
-                        <span class="pill">
-                            PERSONALIZAÇÃO
-                        </span>
-
-                        <h3>
-                            Uniformes para sua equipe
-                        </h3>
+                        <h3>Uniformes para sua equipe</h3>
 
                         <p>
                             Uniformes esportivos para equipes, instituições,
@@ -238,171 +197,138 @@
                         <a class="btn primary" href="#orcamento">
                             Quero um orçamento
                         </a>
-
                     </div>
 
                 </div>
-
             </div>
-
         </section>
 
-
-
-        <!-- PRODUTOS -->
-        <section id="produtos" class="section">
-
+        <!-- CATÁLOGO -->
+        <section id="catalogo" class="section catalog-section">
             <div class="container">
 
                 <div class="section-head">
+                    <div>
+                        <span class="eyebrow">CATÁLOGO VICTOR STORE</span>
+                        <h2>Encontre o produto ideal</h2>
+                    </div>
 
+                    <p>
+                        Pesquise pelo nome ou filtre por categoria.
+                    </p>
+                </div>
+
+                <div class="catalog-tools">
+                    <input id="catalog-search" type="search"
+                        placeholder="Buscar produto..."
+                        oninput="renderCatalogo()">
+
+                    <select id="catalog-category"
+                        onchange="renderCatalogo()">
+                        <option value="">Todas as categorias</option>
+                    </select>
+                </div>
+
+                <div id="catalogo-lista" class="catalog-grid"></div>
+            </div>
+        </section>
+
+        <!-- PRODUTOS -->
+        <section id="produtos" class="section">
+            <div class="container">
+
+                <div class="section-head">
                     <div>
                         <span class="eyebrow">NOSSA LOJA</span>
                         <h2>Produtos</h2>
                     </div>
 
                     <p>
-                        Escolha seus produtos e monte seu pedido.
+                        Escolha seus produtos e adicione ao carrinho.
                     </p>
-
                 </div>
 
-
                 <div id="lista-produtos" class="cards"></div>
-
             </div>
-
         </section>
-
-
 
         <!-- ORÇAMENTO -->
         <section id="orcamento" class="section quote">
-
             <div class="container quote-grid">
 
                 <div>
-
-                    <span class="eyebrow">
-                        FALE COM A VICTOR STORE
-                    </span>
+                    <span class="eyebrow">FALE COM A VICTOR STORE</span>
 
                     <h2>
                         Precisa de material para sua equipe ou instituição?
                     </h2>
 
                     <p>
-                        Envie o que você precisa pelo WhatsApp.
-                        Nossa equipe pode orientar sobre produtos,
-                        quantidades e disponibilidade.
+                        Para compras institucionais, grandes quantidades ou produtos
+                        personalizados, envie sua necessidade pelo WhatsApp.
                     </p>
 
                     <div class="mini-contact">
                         <b>WhatsApp</b>
                         <span>(88) 99778-9507</span>
                     </div>
-
                 </div>
 
-
                 <form class="form" onsubmit="sendQuote(event)">
-
                     <label>
                         Seu nome
-
-                        <input
-                            id="nome"
-                            required
-                            placeholder="Digite seu nome">
+                        <input id="nome" required placeholder="Digite seu nome">
                     </label>
-
 
                     <label>
                         O que você precisa?
-
-                        <textarea
-                            id="pedido"
-                            required
+                        <textarea id="pedido" required
                             placeholder="Ex.: 10 bolas de futsal, 20 coletes e 1 rede..."></textarea>
                     </label>
 
-
-                    <button
-                        class="btn primary"
-                        type="submit">
+                    <button class="btn primary" type="submit">
                         Enviar pelo WhatsApp →
                     </button>
 
                     <small>
                         Ao enviar, o WhatsApp será aberto com sua mensagem pronta.
                     </small>
-
                 </form>
 
             </div>
-
         </section>
-
-
 
         <!-- CONTATO -->
         <section id="contato" class="section contact">
-
             <div class="container contact-grid">
 
                 <div>
-
-                    <span class="eyebrow">
-                        CONTATO
-                    </span>
-
-                    <h2>
-                        Victor Store
-                    </h2>
-
-                    <p>
-                        Materiais esportivos para quem leva o esporte a sério.
-                    </p>
-
+                    <span class="eyebrow">CONTATO</span>
+                    <h2>Victor Store</h2>
+                    <p>Materiais esportivos para quem leva o esporte a sério.</p>
                 </div>
-
 
                 <div class="contact-items">
 
-                    <a
-                        href="https://wa.me/5588997789507"
-                        target="_blank"
-                        rel="noopener">
-
+                    <a href="https://wa.me/5588997789507"
+                        target="_blank" rel="noopener">
                         <b>WhatsApp</b>
                         <span>(88) 99778-9507</span>
-
                     </a>
-
 
                     <a href="mailto:rdesousacosta22@gmail.com">
-
                         <b>E-mail</b>
                         <span>rdesousacosta22@gmail.com</span>
-
                     </a>
 
-
-                    <a
-                        href="https://www.instagram.com/victorstoreoficialvs/"
-                        target="_blank"
-                        rel="noopener">
-
+                    <a href="https://www.instagram.com/victorstoreoficialvs/"
+                        target="_blank" rel="noopener">
                         <b>Instagram</b>
                         <span>@victorstoreoficialvs</span>
-
                     </a>
 
-
                     <div>
-
                         <b>Endereço</b>
-
                         <span>
                             Rua Principal, nº 54,
                             Bairro Santo Antônio,
@@ -410,43 +336,29 @@
                             Crateús/CE —
                             CEP 63705-990
                         </span>
-
                     </div>
 
                 </div>
-
             </div>
-
         </section>
-
 
     </main>
 
-
-
     <!-- RODAPÉ -->
     <footer>
-
         <div class="container">
-
             <span>
                 © <span id="ano"></span>
                 Victor Store. Todos os direitos reservados.
             </span>
-
             <span>
                 Materiais Esportivos • Crateús/CE
             </span>
-
         </div>
-
     </footer>
 
-
-
     <!-- BOTÃO FLUTUANTE WHATSAPP -->
-    <a
-        class="float-wa"
+    <a class="float-wa"
         href="https://wa.me/5588997789507?text=Ol%C3%A1%2C%20vim%20pelo%20site%20da%20Victor%20Store."
         target="_blank"
         rel="noopener"
@@ -454,132 +366,420 @@
         ◔
     </a>
 
+    <!-- FUNDO DO CARRINHO -->
+    <div id="cart-overlay" class="cart-overlay" onclick="fecharCarrinho()"></div>
 
+    <!-- CARRINHO LATERAL -->
+    <aside id="cart-drawer" class="cart-drawer" aria-label="Carrinho de compras">
+        <div class="cart-header">
+            <div>
+                <span class="eyebrow">SUA COMPRA</span>
+                <h2>Carrinho</h2>
+            </div>
+
+            <button class="cart-close" type="button" onclick="fecharCarrinho()"
+                aria-label="Fechar carrinho">×</button>
+        </div>
+
+        <div id="cart-items" class="cart-items"></div>
+
+        <div class="cart-footer">
+            <div class="cart-total-line">
+                <span>Total</span>
+                <strong id="cart-total">R$ 0,00</strong>
+            </div>
+
+            <button id="checkout-button" class="btn primary checkout-button"
+                type="button" onclick="iniciarCheckout()">
+                Finalizar compra
+            </button>
+
+            <small>
+                O pagamento pelo Mercado Pago será ativado na próxima etapa.
+            </small>
+        </div>
+    </aside>
+
+    <!-- MODAL DE DETALHES -->
+    <div id="product-modal" class="product-modal" aria-hidden="true">
+        <div class="product-modal-backdrop" onclick="fecharDetalhes()"></div>
+
+        <div class="product-modal-card">
+            <button class="product-modal-close" type="button"
+                onclick="fecharDetalhes()" aria-label="Fechar">×</button>
+
+            <img id="modal-img" src="" alt="">
+
+            <div class="product-modal-content">
+                <p id="modal-category" class="categoria-produto"></p>
+                <h2 id="modal-name"></h2>
+                <strong id="modal-price" class="preco-produto"></strong>
+                <p id="modal-description"></p>
+                <p id="modal-stock" class="estoque-produto"></p>
+
+                <button id="modal-add" class="btn primary" type="button">
+                    Adicionar ao carrinho
+                </button>
+            </div>
+        </div>
+    </div>
 
     <!-- ARQUIVO DOS PRODUTOS -->
-    <script src="produtos.js?=4"></script>
+    <script src="produtos.js?=5"></script>
 
-
-
-    <!-- PRODUTOS NA TELA -->
+    <!-- LOJA / CARRINHO -->
     <script>
+        const listaProdutos = document.getElementById("lista-produtos");
+        const catalogoLista = document.getElementById("catalogo-lista");
+        const categoriaSelect = document.getElementById("catalog-category");
 
-        const listaProdutos =
-            document.getElementById("lista-produtos");
-
-
-        produtos.forEach(produto => {
-
-            const mensagem =
-                encodeURIComponent(
-                    `Olá! Tenho interesse no produto ${produto.nome} da Victor Store. Gostaria de mais informações.`
-                );
-
-
-            const whatsapp =
-                `https://wa.me/5588997789507?text=${mensagem}`;
-
-
-            listaProdutos.innerHTML += `
-
-                <div class="card">
-
-                    <img
-                        src="${produto.imagem}"
-                        alt="${produto.nome}">
-
-
-                    <p class="categoria-produto">
-                        ${produto.categoria}
-                    </p>
-
-
-                    <h3>
-                        ${produto.nome}
-                    </h3>
-
-
-                    <strong class="preco-produto">
-
-                        R$ ${produto.preco
-                            .toFixed(2)
-                            .replace(".", ",")}
-
-                    </strong>
-
-
-                    <p class="estoque-produto">
-
-                        Estoque: ${produto.estoque}
-
-                    </p>
-
-
-                    <a
-                        href="${whatsapp}"
-                        target="_blank"
-                        rel="noopener"
-                        class="btn primary comprar-produto">
-
-                        Comprar pelo WhatsApp
-
-                    </a>
-
-                </div>
-
-            `;
-
+        const dinheiro = new Intl.NumberFormat("pt-BR", {
+            style: "currency",
+            currency: "BRL"
         });
 
-    </script>
+        let carrinho = JSON.parse(localStorage.getItem("victorStoreCarrinho")) || [];
 
+        function descricaoProduto(produto) {
+            return produto.descricao ||
+                `${produto.nome}. Produto disponível na Victor Store. Consulte características, disponibilidade e condições de compra.`;
+        }
 
+        function estoqueProduto(produto) {
+            const estoque = Number(produto.estoque);
+            return Number.isFinite(estoque) ? estoque : 0;
+        }
 
-    <!-- FUNÇÕES DO SITE -->
-    <script>
+        function salvarCarrinho() {
+            localStorage.setItem("victorStoreCarrinho", JSON.stringify(carrinho));
+            atualizarCarrinho();
+        }
+
+        function produtoPorIndice(indice) {
+            return produtos[indice];
+        }
+
+        function adicionarAoCarrinho(indice) {
+            const produto = produtoPorIndice(indice);
+            if (!produto) return;
+
+            const estoque = estoqueProduto(produto);
+
+            if (estoque <= 0) {
+                alert("Este produto está sem estoque no momento.");
+                return;
+            }
+
+            const existente = carrinho.find(item => item.indice === indice);
+
+            if (existente) {
+                if (existente.quantidade >= estoque) {
+                    alert("Você atingiu a quantidade disponível em estoque.");
+                    return;
+                }
+                existente.quantidade += 1;
+            } else {
+                carrinho.push({ indice, quantidade: 1 });
+            }
+
+            salvarCarrinho();
+            abrirCarrinho();
+        }
+
+        function alterarQuantidade(indice, delta) {
+            const item = carrinho.find(item => item.indice === indice);
+            if (!item) return;
+
+            const produto = produtoPorIndice(indice);
+            const estoque = estoqueProduto(produto);
+            const novaQuantidade = item.quantidade + delta;
+
+            if (novaQuantidade <= 0) {
+                removerDoCarrinho(indice);
+                return;
+            }
+
+            if (novaQuantidade > estoque) {
+                alert("Quantidade maior que o estoque disponível.");
+                return;
+            }
+
+            item.quantidade = novaQuantidade;
+            salvarCarrinho();
+        }
+
+        function removerDoCarrinho(indice) {
+            carrinho = carrinho.filter(item => item.indice !== indice);
+            salvarCarrinho();
+        }
+
+        function atualizarCarrinho() {
+            const cartItems = document.getElementById("cart-items");
+            const cartCount = document.getElementById("cart-count");
+            const cartTotal = document.getElementById("cart-total");
+            const checkoutButton = document.getElementById("checkout-button");
+
+            const quantidadeTotal = carrinho.reduce(
+                (total, item) => total + item.quantidade, 0
+            );
+
+            cartCount.textContent = quantidadeTotal;
+
+            if (carrinho.length === 0) {
+                cartItems.innerHTML = `
+                    <div class="cart-empty">
+                        <span>🛒</span>
+                        <p>Seu carrinho está vazio.</p>
+                        <a href="#produtos" onclick="fecharCarrinho()">Ver produtos</a>
+                    </div>
+                `;
+                cartTotal.textContent = dinheiro.format(0);
+                checkoutButton.disabled = true;
+                return;
+            }
+
+            let total = 0;
+
+            cartItems.innerHTML = carrinho.map(item => {
+                const produto = produtoPorIndice(item.indice);
+                if (!produto) return "";
+
+                const subtotal = Number(produto.preco) * item.quantidade;
+                total += subtotal;
+
+                return `
+                    <div class="cart-item">
+                        <img src="${produto.imagem}" alt="${produto.nome}">
+
+                        <div class="cart-item-info">
+                            <strong>${produto.nome}</strong>
+                            <span>${dinheiro.format(Number(produto.preco))}</span>
+
+                            <div class="quantity-control">
+                                <button type="button"
+                                    onclick="alterarQuantidade(${item.indice}, -1)">−</button>
+
+                                <span>${item.quantidade}</span>
+
+                                <button type="button"
+                                    onclick="alterarQuantidade(${item.indice}, 1)">+</button>
+                            </div>
+
+                            <button class="remove-item" type="button"
+                                onclick="removerDoCarrinho(${item.indice})">
+                                Remover
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join("");
+
+            cartTotal.textContent = dinheiro.format(total);
+            checkoutButton.disabled = false;
+        }
+
+        function abrirCarrinho() {
+            document.getElementById("cart-drawer").classList.add("open");
+            document.getElementById("cart-overlay").classList.add("open");
+            document.body.classList.add("no-scroll");
+        }
+
+        function fecharCarrinho() {
+            document.getElementById("cart-drawer").classList.remove("open");
+            document.getElementById("cart-overlay").classList.remove("open");
+            document.body.classList.remove("no-scroll");
+        }
+
+        function renderProdutos() {
+            listaProdutos.innerHTML = produtos.map((produto, indice) => {
+                const estoque = estoqueProduto(produto);
+                const semEstoque = estoque <= 0;
+
+                return `
+                    <article class="card product-card">
+                        <button class="product-image-button" type="button"
+                            onclick="abrirDetalhes(${indice})">
+                            <img src="${produto.imagem}" alt="${produto.nome}">
+                        </button>
+
+                        <p class="categoria-produto">${produto.categoria}</p>
+
+                        <h3>${produto.nome}</h3>
+
+                        <strong class="preco-produto">
+                            ${dinheiro.format(Number(produto.preco))}
+                        </strong>
+
+                        <p class="estoque-produto">
+                            ${semEstoque ? "Sem estoque" : `Estoque: ${estoque}`}
+                        </p>
+
+                        <div class="product-actions">
+                            <button class="btn ghost details-button" type="button"
+                                onclick="abrirDetalhes(${indice})">
+                                Ver detalhes
+                            </button>
+
+                            <button class="btn primary add-cart-button" type="button"
+                                onclick="adicionarAoCarrinho(${indice})"
+                                ${semEstoque ? "disabled" : ""}>
+                                ${semEstoque ? "Indisponível" : "Adicionar ao carrinho"}
+                            </button>
+                        </div>
+                    </article>
+                `;
+            }).join("");
+        }
+
+        function prepararCategorias() {
+            const categorias = [...new Set(
+                produtos
+                    .map(produto => produto.categoria)
+                    .filter(Boolean)
+            )].sort();
+
+            categoriaSelect.innerHTML =
+                `<option value="">Todas as categorias</option>` +
+                categorias.map(categoria =>
+                    `<option value="${categoria}">${categoria}</option>`
+                ).join("");
+        }
+
+        function renderCatalogo() {
+            const busca = document.getElementById("catalog-search")
+                .value.trim().toLowerCase();
+
+            const categoria = categoriaSelect.value;
+
+            const filtrados = produtos
+                .map((produto, indice) => ({ produto, indice }))
+                .filter(({ produto }) => {
+                    const bateBusca =
+                        produto.nome.toLowerCase().includes(busca) ||
+                        String(produto.categoria || "").toLowerCase().includes(busca) ||
+                        descricaoProduto(produto).toLowerCase().includes(busca);
+
+                    const bateCategoria =
+                        !categoria || produto.categoria === categoria;
+
+                    return bateBusca && bateCategoria;
+                });
+
+            if (filtrados.length === 0) {
+                catalogoLista.innerHTML = `
+                    <div class="catalog-empty">
+                        Nenhum produto encontrado.
+                    </div>
+                `;
+                return;
+            }
+
+            catalogoLista.innerHTML = filtrados.map(({ produto, indice }) => {
+                const estoque = estoqueProduto(produto);
+
+                return `
+                    <article class="catalog-card">
+                        <button class="product-image-button" type="button"
+                            onclick="abrirDetalhes(${indice})">
+                            <img src="${produto.imagem}" alt="${produto.nome}">
+                        </button>
+
+                        <div class="catalog-card-content">
+                            <p class="categoria-produto">${produto.categoria}</p>
+                            <h3>${produto.nome}</h3>
+                            <p class="catalog-description">
+                                ${descricaoProduto(produto)}
+                            </p>
+                            <strong class="preco-produto">
+                                ${dinheiro.format(Number(produto.preco))}
+                            </strong>
+                            <p class="estoque-produto">
+                                ${estoque > 0 ? `Estoque: ${estoque}` : "Sem estoque"}
+                            </p>
+
+                            <button class="btn primary" type="button"
+                                onclick="adicionarAoCarrinho(${indice})"
+                                ${estoque <= 0 ? "disabled" : ""}>
+                                ${estoque <= 0 ? "Indisponível" : "Adicionar ao carrinho"}
+                            </button>
+                        </div>
+                    </article>
+                `;
+            }).join("");
+        }
+
+        function abrirDetalhes(indice) {
+            const produto = produtoPorIndice(indice);
+            if (!produto) return;
+
+            const estoque = estoqueProduto(produto);
+
+            document.getElementById("modal-img").src = produto.imagem;
+            document.getElementById("modal-img").alt = produto.nome;
+            document.getElementById("modal-category").textContent = produto.categoria || "";
+            document.getElementById("modal-name").textContent = produto.nome;
+            document.getElementById("modal-price").textContent =
+                dinheiro.format(Number(produto.preco));
+            document.getElementById("modal-description").textContent =
+                descricaoProduto(produto);
+            document.getElementById("modal-stock").textContent =
+                estoque > 0 ? `Estoque disponível: ${estoque}` : "Produto sem estoque";
+
+            const botao = document.getElementById("modal-add");
+            botao.disabled = estoque <= 0;
+            botao.textContent = estoque <= 0 ? "Indisponível" : "Adicionar ao carrinho";
+            botao.onclick = () => adicionarAoCarrinho(indice);
+
+            document.getElementById("product-modal").classList.add("open");
+            document.getElementById("product-modal").setAttribute("aria-hidden", "false");
+            document.body.classList.add("no-scroll");
+        }
+
+        function fecharDetalhes() {
+            document.getElementById("product-modal").classList.remove("open");
+            document.getElementById("product-modal").setAttribute("aria-hidden", "true");
+            document.body.classList.remove("no-scroll");
+        }
+
+        function iniciarCheckout() {
+            if (carrinho.length === 0) return;
+
+            alert(
+                "Carrinho pronto! Na próxima etapa vamos conectar este botão ao Checkout Transparente do Mercado Pago."
+            );
+        }
 
         document.getElementById("ano").textContent =
             new Date().getFullYear();
 
-
         function sendQuote(event) {
-
             event.preventDefault();
 
-
-            const nome =
-                document
-                    .getElementById("nome")
-                    .value
-                    .trim();
-
-
-            const pedido =
-                document
-                    .getElementById("pedido")
-                    .value
-                    .trim();
-
+            const nome = document.getElementById("nome").value.trim();
+            const pedido = document.getElementById("pedido").value.trim();
 
             const mensagem =
                 `Olá, sou ${nome}. Vim pelo site da Victor Store e gostaria de um orçamento.\n\n${pedido}`;
-
 
             const url =
                 "https://wa.me/5588997789507?text=" +
                 encodeURIComponent(mensagem);
 
-
-            window.open(
-                url,
-                "_blank",
-                "noopener"
-            );
-
+            window.open(url, "_blank", "noopener");
         }
 
+        document.addEventListener("keydown", event => {
+            if (event.key === "Escape") {
+                fecharCarrinho();
+                fecharDetalhes();
+            }
+        });
+
+        renderProdutos();
+        prepararCategorias();
+        renderCatalogo();
+        atualizarCarrinho();
     </script>
 
 </body>
-
 </html>
