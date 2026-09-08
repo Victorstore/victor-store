@@ -383,11 +383,20 @@
 
         <div id="cart-items" class="cart-items"></div>
 
-        <div class="cart-footer">
-            <div class="cart-total-line">
-                <span>Total</span>
-                <strong id="cart-total">R$ 0,00</strong>
-            </div>
+       <div class="cart-total-line">
+    <span>Produtos</span>
+    <strong id="cart-subtotal">R$ 0,00</strong>
+</div>
+
+<div class="cart-total-line">
+    <span>Frete</span>
+    <strong id="cart-shipping">A calcular</strong>
+</div>
+
+<div class="cart-total-line">
+    <span>Total da compra</span>
+    <strong id="cart-total">R$ 0,00</strong>
+</div>
 <div class="shipping-box">
     <label for="shipping-cep"><strong>Calcular frete</strong></label>
 
@@ -596,7 +605,8 @@
                 `;
             }).join("");
 
-            cartTotal.textContent = dinheiro.format(total);
+          document.getElementById("cart-subtotal").textContent = dinheiro.format(total);
+cartTotal.textContent = dinheiro.format(total);
             checkoutButton.disabled = false;
         }
 
