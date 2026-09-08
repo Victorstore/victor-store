@@ -15,7 +15,17 @@ export default async function handler(req, res) {
         error: "CEP inválido."
       });
     }
+    
+const cepOrigem = String(
+  process.env.MELHOR_ENVIO_CEP_ORIGEM || ""
+).replace(/\D/g, "");
 
+if (cepOrigem.length !== 8) {
+  return res.status(500).json({
+    error: "CEP de origem não configurado."
+  });
+}
+    
     return res.status(200).json({
       message: "CEP recebido com sucesso.",
       cep: cepLimpo,
