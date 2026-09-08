@@ -1232,6 +1232,46 @@ const resumoPedido = carrinho.map((item) => {
         prepararCategorias();
         renderCatalogo();
         atualizarCarrinho();
+   const botaoCalcularFrete = document.getElementById("shipping-calculate-button");
+
+if (botaoCalcularFrete) {
+  botaoCalcularFrete.addEventListener("click", async () => {
+    const campoCep = document.getElementById("shipping-cep");
+    const resultado = document.getElementById("shipping-result");
+
+    const cep = campoCep.value.replace(/\D/g, "");
+
+    if (cep.length !== 8) {
+      resultado.textContent = "Digite um CEP válido com 8 números.";
+      return;
+    }
+
+    resultado.textContent = "Calculando...";
+
+    try {
+      const resposta = await fetch("/api/calcular-frete", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ cep })
+      });
+
+      const dados = await resposta.json();
+
+      if (!resposta.ok) {
+        resultado.textContent = dados.error || "Não foi possível calcular o frete.";
+        return;
+      }
+
+      resultado.textContent = "CEP recebido. Cotação de frete será disponibilizada em breve.";
+
+    } catch (erro) {
+      console.error("Erro ao calcular frete:", erro);
+      resultado.textContent = "Erro ao consultar o frete.";
+    }
+  });
+}
     </script>
 
 </body>
