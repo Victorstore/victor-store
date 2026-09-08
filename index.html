@@ -388,7 +388,29 @@
                 <span>Total</span>
                 <strong id="cart-total">R$ 0,00</strong>
             </div>
+<div class="shipping-box">
+    <label for="shipping-cep"><strong>Calcular frete</strong></label>
 
+    <div class="shipping-row">
+        <input
+            type="text"
+            id="shipping-cep"
+            placeholder="Digite seu CEP"
+            maxlength="9"
+            inputmode="numeric"
+        >
+
+        <button
+            type="button"
+            id="shipping-calculate-button"
+            class="btn secondary"
+        >
+            Calcular
+        </button>
+    </div>
+
+    <div id="shipping-result"></div>
+</div>
             <button id="checkout-button" class="btn primary checkout-button"
                 type="button" onclick="iniciarCheckout()">
                 Finalizar compra
