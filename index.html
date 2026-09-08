@@ -543,7 +543,7 @@
             carrinho = carrinho.filter(item => item.indice !== indice);
             salvarCarrinho();
         }
-
+let valorFrete = 0;
         function atualizarCarrinho() {
             const cartItems = document.getElementById("cart-items");
             const cartCount = document.getElementById("cart-count");
@@ -570,7 +570,7 @@
             }
 
             let total = 0;
-
+let total = 0;
             cartItems.innerHTML = carrinho.map(item => {
                 const produto = produtoPorIndice(item.indice);
                 if (!produto) return "";
@@ -606,7 +606,9 @@
             }).join("");
 
           document.getElementById("cart-subtotal").textContent = dinheiro.format(total);
-cartTotal.textContent = dinheiro.format(total);
+            document.getElementById("cart-shipping").textContent =
+  valorFrete > 0 ? dinheiro.format(valorFrete) : "A calcular";
+cartTotal.textContent = dinheiro.format(total + valorFrete);
             checkoutButton.disabled = false;
         }
 
