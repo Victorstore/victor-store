@@ -15,7 +15,7 @@ export default async function handler(req, res) {
         headers: {
           "Accept": "application/json",
           "Content-Type": "application/json",
-          "User-Agent": "Victor Store"
+          "User-Agent": process.env.MELHOR_ENVIO_USER_AGENT
         },
         body: JSON.stringify({
           grant_type: "authorization_code",
