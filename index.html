@@ -1008,11 +1008,19 @@ const {
         const produto = produtoPorIndice(item.indice);
         return soma + (Number(produto.preco) * item.quantidade);
     }, 0);
+const tipoFrete = document.querySelector(
+    'input[name="shipping-option"]:checked'
+)?.value || "calcular";
 
+const descricaoFrete =
+    tipoFrete === "combinar"
+        ? "Frete a combinar com o vendedor"
+        : "Frete calculado pelo CEP";
     const pedido = {
         type: "online",
         total_amount: total.toFixed(2),
-        external_reference: "victor-store-" + Date.now(),
+      external_reference:
+    "victor-store-" + tipoFrete + "-" + Date.now(),
         processing_mode: "automatic",
         transactions: {
             payments: [
@@ -1142,7 +1150,18 @@ const resumoPedido = carrinho.map((item) => {
                 </h3>
 
                 ${resumoPedido}
-
+<div style="
+    display:flex;
+    justify-content:space-between;
+    gap:15px;
+    padding:12px 0;
+    border-bottom:1px solid #eee;
+    text-align:left;
+    font-size:14px;
+">
+    <span>Forma de entrega</span>
+    <strong>${descricaoFrete}</strong>
+</div>
                 <div style="
                     display:flex;
                     justify-content:space-between;
