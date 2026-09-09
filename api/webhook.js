@@ -92,6 +92,7 @@ if (!respostaOrder.ok) {
 
 console.log("Order:", order.id);
 console.log("Status:", order.status);
+console.log("Order completa:", JSON.stringify(order));
 console.log("Referência:", order.external_reference);
 console.log("Valor:", order.total_amount);
     console.log("=== WEBHOOK MERCADO PAGO ===");
