@@ -630,8 +630,14 @@ let valorFrete = 0;
             }).join("");
 
           document.getElementById("cart-subtotal").textContent = dinheiro.format(total);
-            document.getElementById("cart-shipping").textContent =
-  valorFrete > 0 ? dinheiro.format(valorFrete) : "A calcular";
+            const tipoFreteSelecionado = document.querySelector(
+    'input[name="shipping-option"]:checked'
+)?.value;
+
+document.getElementById("cart-shipping").textContent =
+    tipoFreteSelecionado === "combinar"
+        ? "A combinar"
+        : (valorFrete > 0 ? dinheiro.format(valorFrete) : "A calcular");
 cartTotal.textContent = dinheiro.format(total + valorFrete);
             checkoutButton.disabled = false;
         }
@@ -1268,7 +1274,44 @@ const resumoPedido = carrinho.map((item) => {
         prepararCategorias();
         renderCatalogo();
         atualizarCarrinho();
-   const botaoCalcularFrete = document.getElementById("shipping-calculate-button");
+ const opcoesFrete = document.querySelectorAll('input[name="shipping-option"]');
+const campoCepFrete = document.getElementById("shipping-cep");
+const botaoFrete = document.getElementById("shipping-calculate-button");
+const resultadoFrete = document.getElementById("shipping-result");
+
+opcoesFrete.forEach(opcao => {
+  opcao.addEventListener("change", () => {
+    const tipoFrete = document.querySelector(
+      'input[name="shipping-option"]:checked'
+    )?.value;
+
+    if (tipoFrete === "combinar") {
+      valorFrete = 0;
+
+      campoCepFrete.disabled = true;
+      botaoFrete.disabled = true;
+      campoCepFrete.value = "";
+
+      resultadoFrete.textContent =
+        "Frete a combinar com o vendedor. Entraremos em contato após a compra.";
+
+      document.getElementById("cart-shipping").textContent = "A combinar";
+
+      atualizarCarrinho();
+
+    } else {
+      campoCepFrete.disabled = false;
+      botaoFrete.disabled = false;
+
+      resultadoFrete.textContent = "";
+
+      document.getElementById("cart-shipping").textContent = "A calcular";
+
+      atualizarCarrinho();
+    }
+  });
+});
+        const botaoCalcularFrete = document.getElementById("shipping-calculate-button");
 
 if (botaoCalcularFrete) {
   botaoCalcularFrete.addEventListener("click", async () => {
