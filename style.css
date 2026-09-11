@@ -942,3 +942,11 @@ footer .container {
         height: 80px;
     }
 }
+input[type="radio"] {
+    width: auto;
+    padding: 0;
+    margin: 0 8px 0 0;
+    border: 0;
+    background: transparent;
+    accent-color: #e50914;
+}
