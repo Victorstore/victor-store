@@ -1022,9 +1022,13 @@ const {
 const tipoFrete = document.querySelector(
     'input[name="shipping-option"]:checked'
 )?.value || "calcular";
-
+window.formaEntregaSelecionada = tipoFrete;
 const descricaoFrete =
-    tipoFrete === "combinar"
+    tipoFrete === "topic"
+        ? "Entrega regional por Topic"
+        : tipoFrete === "retirada"
+        ? "Retirada em Crateús"
+        : tipoFrete === "combinar"
         ? "Frete a combinar com o vendedor"
         : "Frete calculado pelo CEP";
     const pedido = {
