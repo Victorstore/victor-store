@@ -91,7 +91,7 @@ export default async function handler(req, res) {
         detalhes: dados
       });
     }
-
+console.log("RESPOSTA MELHOR ENVIO:", JSON.stringify(dados));
     const opcoes = dados
       .filter(item => !item.error && item.price)
       .map(item => ({
