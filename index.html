@@ -665,6 +665,11 @@ let valorFrete = 0;
 
                         <div class="cart-item-info">
                             <strong>${produto.nome}</strong>
+                            ${item.variacao_id ? `
+    <small style="display:block; margin:4px 0 6px;">
+        ${item.faixa} • ${item.cor} • Nº ${item.numero}
+    </small>
+` : ""}
                             <span>${dinheiro.format(Number(produto.preco))}</span>
 
                             <div class="quantity-control">
