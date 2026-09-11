@@ -28,7 +28,7 @@ export default async function handler(req, res) {
     );
 
     const dados = await resposta.json();
-
+    console.log("Resposta Mercado Pago:", JSON.stringify(dados));
     return res.status(resposta.status).json(dados);
 
   } catch (erro) {
