@@ -798,32 +798,201 @@ cartTotal.textContent = dinheiro.format(total + valorFrete);
             }).join("");
         }
 
-        function abrirDetalhes(indice) {
-            const produto = produtoPorIndice(indice);
-            if (!produto) return;
+       async function abrirDetalhes(indice) {
+    const produto = produtoPorIndice(indice);
+    if (!produto) return;
 
-            const estoque = estoqueProduto(produto);
+    const estoque = estoqueProduto(produto);
 
-            document.getElementById("modal-img").src = produto.imagem;
-            document.getElementById("modal-img").alt = produto.nome;
-            document.getElementById("modal-category").textContent = produto.categoria || "";
-            document.getElementById("modal-name").textContent = produto.nome;
-            document.getElementById("modal-price").textContent =
-                dinheiro.format(Number(produto.preco));
-            document.getElementById("modal-description").textContent =
-                descricaoProduto(produto);
-            document.getElementById("modal-stock").textContent =
-                estoque > 0 ? `Estoque disponível: ${estoque}` : "Produto sem estoque";
+    document.getElementById("modal-img").src = produto.imagem;
+    document.getElementById("modal-img").alt = produto.nome;
+    document.getElementById("modal-category").textContent = produto.categoria || "";
+    document.getElementById("modal-name").textContent = produto.nome;
+    document.getElementById("modal-price").textContent =
+        dinheiro.format(Number(produto.preco));
+    document.getElementById("modal-description").textContent =
+        descricaoProduto(produto);
 
-            const botao = document.getElementById("modal-add");
-            botao.disabled = estoque <= 0;
-            botao.textContent = estoque <= 0 ? "Indisponível" : "Adicionar ao carrinho";
-            botao.onclick = () => adicionarAoCarrinho(indice);
+    const modalStock = document.getElementById("modal-stock");
+    const botao = document.getElementById("modal-add");
+    const areaVariacoes = document.getElementById("modal-variacoes");
+    const selectFaixa = document.getElementById("modal-faixa");
+    const selectCor = document.getElementById("modal-cor");
+    const selectNumero = document.getElementById("modal-numero");
 
-            document.getElementById("product-modal").classList.add("open");
-            document.getElementById("product-modal").setAttribute("aria-hidden", "false");
-            document.body.classList.add("no-scroll");
+    // Produtos com variações: Chuteira Society e Chuteira Futsal
+    if (Number(produto.id) === 9 || Number(produto.id) === 10) {
+
+        areaVariacoes.style.display = "block";
+
+        selectFaixa.innerHTML = `<option value="">Selecione</option>`;
+        selectCor.innerHTML = `<option value="">Selecione</option>`;
+        selectNumero.innerHTML = `<option value="">Selecione</option>`;
+
+        selectCor.disabled = true;
+        selectNumero.disabled = true;
+
+        modalStock.textContent = "Escolha a variação desejada.";
+        botao.disabled = true;
+        botao.textContent = "Selecione a variação";
+        botao.onclick = null;
+
+        try {
+            const resposta = await fetch(
+                `/api/variacoes-produtos?produto_id=${produto.id}`
+            );
+
+            const dados = await resposta.json();
+
+            if (!resposta.ok || !dados.ok || !Array.isArray(dados.variacoes)) {
+                throw new Error("Não foi possível carregar as variações.");
+            }
+
+            const variacoes = dados.variacoes;
+
+            const faixas = [...new Set(
+                variacoes.map(v => v.faixa).filter(Boolean)
+            )];
+
+            faixas.forEach(faixa => {
+                selectFaixa.innerHTML +=
+                    `<option value="${faixa}">${faixa}</option>`;
+            });
+
+            selectFaixa.onchange = () => {
+                const faixa = selectFaixa.value;
+
+                selectCor.innerHTML =
+                    `<option value="">Selecione</option>`;
+                selectNumero.innerHTML =
+                    `<option value="">Selecione</option>`;
+
+                selectNumero.disabled = true;
+                botao.disabled = true;
+                botao.textContent = "Selecione a variação";
+                modalStock.textContent = "Escolha a cor.";
+
+                if (!faixa) {
+                    selectCor.disabled = true;
+                    return;
+                }
+
+                const cores = [...new Set(
+                    variacoes
+                        .filter(v => v.faixa === faixa)
+                        .map(v => v.cor)
+                        .filter(Boolean)
+                )];
+
+                cores.forEach(cor => {
+                    selectCor.innerHTML +=
+                        `<option value="${cor}">${cor}</option>`;
+                });
+
+                selectCor.disabled = false;
+            };
+
+            selectCor.onchange = () => {
+                const faixa = selectFaixa.value;
+                const cor = selectCor.value;
+
+                selectNumero.innerHTML =
+                    `<option value="">Selecione</option>`;
+
+                botao.disabled = true;
+                botao.textContent = "Selecione a variação";
+
+                if (!cor) {
+                    selectNumero.disabled = true;
+                    modalStock.textContent = "Escolha a cor.";
+                    return;
+                }
+
+                const numeros = variacoes
+                    .filter(v =>
+                        v.faixa === faixa &&
+                        v.cor === cor &&
+                        Number(v.estoque) > 0
+                    )
+                    .map(v => v.numero)
+                    .filter(Boolean)
+                    .sort((a, b) => Number(a) - Number(b));
+
+                numeros.forEach(numero => {
+                    selectNumero.innerHTML +=
+                        `<option value="${numero}">${numero}</option>`;
+                });
+
+                selectNumero.disabled = false;
+                modalStock.textContent = "Escolha a numeração.";
+            };
+
+            selectNumero.onchange = () => {
+                const faixa = selectFaixa.value;
+                const cor = selectCor.value;
+                const numero = selectNumero.value;
+
+                if (!numero) {
+                    botao.disabled = true;
+                    botao.textContent = "Selecione a variação";
+                    modalStock.textContent = "Escolha a numeração.";
+                    return;
+                }
+
+                const variacao = variacoes.find(v =>
+                    v.faixa === faixa &&
+                    v.cor === cor &&
+                    String(v.numero) === String(numero)
+                );
+
+                if (!variacao) {
+                    botao.disabled = true;
+                    botao.textContent = "Indisponível";
+                    modalStock.textContent = "Variação indisponível.";
+                    return;
+                }
+
+                modalStock.textContent =
+                    `Estoque disponível: ${variacao.estoque}`;
+
+                // Vamos ligar este botão ao carrinho no próximo passo.
+                botao.disabled = true;
+                botao.textContent = "Variação selecionada";
+            };
+
+        } catch (erro) {
+            console.error("Erro ao carregar variações:", erro);
+
+            modalStock.textContent =
+                "Não foi possível carregar as opções deste produto.";
+
+            botao.disabled = true;
+            botao.textContent = "Indisponível";
         }
+
+    } else {
+
+        // Produtos normais, sem variações
+        areaVariacoes.style.display = "none";
+
+        modalStock.textContent =
+            estoque > 0
+                ? `Estoque disponível: ${estoque}`
+                : "Produto sem estoque";
+
+        botao.disabled = estoque <= 0;
+        botao.textContent =
+            estoque <= 0
+                ? "Indisponível"
+                : "Adicionar ao carrinho";
+
+        botao.onclick = () => adicionarAoCarrinho(indice);
+    }
+
+    document.getElementById("product-modal").classList.add("open");
+    document.getElementById("product-modal").setAttribute("aria-hidden", "false");
+    document.body.classList.add("no-scroll");
+}
 
         function fecharDetalhes() {
             document.getElementById("product-modal").classList.remove("open");
