@@ -1362,7 +1362,18 @@ if (botaoCalcularFrete) {
         return;
       }
 
-      resultado.textContent = "CEP recebido. Cotação de frete será disponibilizada em breve.";
+      if (!dados.freteDisponivel || !dados.opcoes || dados.opcoes.length === 0) {
+  resultado.textContent = "Nenhuma opção de frete encontrada para este CEP.";
+  return;
+}
+
+resultado.innerHTML = dados.opcoes.map(opcao => `
+  <div style="margin-top:10px; padding:10px; border:1px solid #ddd; border-radius:8px;">
+    <strong>${opcao.transportadora} - ${opcao.nome}</strong><br>
+    Frete: R$ ${Number(opcao.preco).toFixed(2).replace(".", ",")}<br>
+    Prazo estimado: ${opcao.prazo} dia(s)
+  </div>
+`).join("");
 
     } catch (erro) {
       console.error("Erro ao calcular frete:", erro);
