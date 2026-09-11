@@ -766,6 +766,7 @@ cartTotal.textContent = dinheiro.format(total + valorFrete);
 
             catalogoLista.innerHTML = filtrados.map(({ produto, indice }) => {
                 const estoque = estoqueProduto(produto);
+                const temVariacoes = Number(produto.id) === 9 || Number(produto.id) === 10;
 
                 return `
                     <article class="catalog-card">
@@ -784,14 +785,14 @@ cartTotal.textContent = dinheiro.format(total + valorFrete);
                                 ${dinheiro.format(Number(produto.preco))}
                             </strong>
                             <p class="estoque-produto">
-                                ${estoque > 0 ? `Estoque: ${estoque}` : "Sem estoque"}
+                               ${temVariacoes ? "Opções disponíveis" : (estoque > 0 ? `Estoque: ${estoque}` : "Sem estoque")}
                             </p>
 
-                            <button class="btn primary" type="button"
-                                onclick="adicionarAoCarrinho(${indice})"
-                                ${estoque <= 0 ? "disabled" : ""}>
-                                ${estoque <= 0 ? "Indisponível" : "Adicionar ao carrinho"}
-                            </button>
+                          <button class="btn primary" type="button"
+    onclick="${temVariacoes ? `abrirDetalhes(${indice})` : `adicionarAoCarrinho(${indice})`}"
+    ${!temVariacoes && estoque <= 0 ? "disabled" : ""}>
+    ${temVariacoes ? "Ver opções" : (estoque <= 0 ? "Indisponível" : "Adicionar ao carrinho")}
+</button>
                         </div>
                     </article>
                 `;
