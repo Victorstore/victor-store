@@ -1314,30 +1314,82 @@ opcoesFrete.forEach(opcao => {
       'input[name="shipping-option"]:checked'
     )?.value;
 
-    if (tipoFrete === "combinar") {
-      valorFrete = 0;
+   if (tipoFrete === "combinar") {
+    valorFrete = 0;
 
-      campoCepFrete.disabled = true;
-      botaoFrete.disabled = true;
-      campoCepFrete.value = "";
+    campoCepFrete.disabled = true;
+    botaoFrete.disabled = true;
+    campoCepFrete.value = "";
 
-      resultadoFrete.textContent =
+    resultadoFrete.textContent =
         "Frete a combinar com o vendedor. Entraremos em contato após a compra.";
 
-      document.getElementById("cart-shipping").textContent = "A combinar";
+    document.getElementById("cart-shipping").textContent = "A combinar";
 
-      atualizarCarrinho();
-
-    } else {
-      campoCepFrete.disabled = false;
-      botaoFrete.disabled = false;
-
-      resultadoFrete.textContent = "";
-
-      document.getElementById("cart-shipping").textContent = "A calcular";
-
-      atualizarCarrinho();
+    const infoBox = document.getElementById("shipping-info-box");
+    if (infoBox) {
+        infoBox.textContent =
+            "O valor e o prazo da entrega serão informados após a compra. A Victor Store entrará em contato com você.";
     }
+
+    atualizarCarrinho();
+
+} else if (tipoFrete === "topic") {
+    valorFrete = 0;
+
+    campoCepFrete.disabled = true;
+    botaoFrete.disabled = true;
+    campoCepFrete.value = "";
+
+    resultadoFrete.textContent =
+        "Entrega regional por Topic selecionada.";
+
+    document.getElementById("cart-shipping").textContent = "Pago à Topic";
+
+    const infoBox = document.getElementById("shipping-info-box");
+    if (infoBox) {
+        infoBox.textContent =
+            "A Victor Store poderá enviar seu pedido por Topic que atende a região. O valor do transporte será informado antes do envio e poderá ser pago no envio ou no recebimento, conforme disponibilidade do transportador. Esse valor não será cobrado junto com a compra no site.";
+    }
+
+    atualizarCarrinho();
+
+} else if (tipoFrete === "retirada") {
+    valorFrete = 0;
+
+    campoCepFrete.disabled = true;
+    botaoFrete.disabled = true;
+    campoCepFrete.value = "";
+
+    resultadoFrete.textContent =
+        "Retirada em Crateús selecionada.";
+
+    document.getElementById("cart-shipping").textContent = "R$ 0,00";
+
+    const infoBox = document.getElementById("shipping-info-box");
+    if (infoBox) {
+        infoBox.textContent =
+            "Retirada em Crateús sem custo de frete. A Victor Store informará o local e o horário para retirada após a confirmação do pedido.";
+    }
+
+    atualizarCarrinho();
+
+} else {
+    campoCepFrete.disabled = false;
+    botaoFrete.disabled = false;
+
+    resultadoFrete.textContent = "";
+
+    document.getElementById("cart-shipping").textContent = "A calcular";
+
+    const infoBox = document.getElementById("shipping-info-box");
+    if (infoBox) {
+        infoBox.textContent =
+            "Digite seu CEP para consultar as opções de frete disponíveis.";
+    }
+
+    atualizarCarrinho();
+}
   });
 });
         const botaoCalcularFrete = document.getElementById("shipping-calculate-button");
