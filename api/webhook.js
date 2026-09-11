@@ -94,6 +94,21 @@ console.log("Order:", order.id);
 console.log("Status:", order.status);
 console.log("Order completa:", JSON.stringify(order));
 console.log("Referência:", order.external_reference);
+    const referencia = String(order.external_reference || "");
+
+let formaEntrega = "Não identificada";
+
+if (referencia.includes("victor-store-topic-")) {
+  formaEntrega = "Entrega regional por Topic";
+} else if (referencia.includes("victor-store-retirada-")) {
+  formaEntrega = "Retirada em Crateús";
+} else if (referencia.includes("victor-store-combinar-")) {
+  formaEntrega = "Frete a combinar com o vendedor";
+} else if (referencia.includes("victor-store-calcular-")) {
+  formaEntrega = "Frete calculado pelo CEP";
+}
+
+console.log("Forma de entrega:", formaEntrega);
 console.log("Valor:", order.total_amount);
     console.log("=== WEBHOOK MERCADO PAGO ===");
     console.log("Headers:", req.headers);
