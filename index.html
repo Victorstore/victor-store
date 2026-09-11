@@ -1304,10 +1304,29 @@ const resumoPedido = carrinho.map((item) => {
             }
         });
 
-        renderProdutos();
-        prepararCategorias();
-        renderCatalogo();
-        atualizarCarrinho();
+        async function carregarProdutosSupabase() {
+    try {
+        const resposta = await fetch("/api/produtos");
+        const dados = await resposta.json();
+
+        if (resposta.ok && dados.ok && Array.isArray(dados.produtos)) {
+            produtos.splice(0, produtos.length, ...dados.produtos);
+            console.log("Produtos carregados do Supabase:", produtos);
+        } else {
+            console.warn("Não foi possível carregar produtos do Supabase. Usando catálogo local.");
+        }
+    } catch (erro) {
+        console.error("Erro ao carregar produtos do Supabase:", erro);
+        console.warn("Usando catálogo local.");
+    }
+
+    renderProdutos();
+    prepararCategorias();
+    renderCatalogo();
+    atualizarCarrinho();
+}
+
+carregarProdutosSupabase();
  const opcoesFrete = document.querySelectorAll('input[name="shipping-option"]');
 const campoCepFrete = document.getElementById("shipping-cep");
 const botaoFrete = document.getElementById("shipping-calculate-button");
