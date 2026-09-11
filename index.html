@@ -566,7 +566,38 @@
             salvarCarrinho();
             abrirCarrinho();
         }
+function adicionarVariacaoAoCarrinho(indice, variacao) {
+    const produto = produtoPorIndice(indice);
+    if (!produto || !variacao) return;
 
+    const existente = carrinho.find(item =>
+        item.indice === indice &&
+        item.variacao_id === variacao.id
+    );
+
+    if (existente) {
+        if (existente.quantidade >= Number(variacao.estoque)) {
+            alert("Você atingiu a quantidade disponível desta variação.");
+            return;
+        }
+
+        existente.quantidade += 1;
+    } else {
+        carrinho.push({
+            indice,
+            quantidade: 1,
+            variacao_id: variacao.id,
+            faixa: variacao.faixa,
+            cor: variacao.cor,
+            numero: variacao.numero,
+            estoque_variacao: Number(variacao.estoque)
+        });
+    }
+
+    salvarCarrinho();
+    fecharDetalhes();
+    abrirCarrinho();
+}
         function alterarQuantidade(indice, delta) {
             const item = carrinho.find(item => item.indice === indice);
             if (!item) return;
@@ -956,9 +987,9 @@ cartTotal.textContent = dinheiro.format(total + valorFrete);
                 modalStock.textContent =
                     `Estoque disponível: ${variacao.estoque}`;
 
-                // Vamos ligar este botão ao carrinho no próximo passo.
-                botao.disabled = true;
-                botao.textContent = "Variação selecionada";
+                botao.disabled = false;
+botao.textContent = "Adicionar ao carrinho";
+botao.onclick = () => adicionarVariacaoAoCarrinho(indice, variacao);
             };
 
         } catch (erro) {
