@@ -461,7 +461,7 @@
             </button>
 
             <small>
-                O pagamento pelo Mercado Pago será ativado na próxima etapa.
+                Pix em ambiente de teste. O frete selecionado pelo CEP será incluído no pagamento.
             </small>
         </div>
     </aside>
@@ -532,6 +532,7 @@
         }
 
         function salvarCarrinho() {
+            limparFreteCalculado();
             localStorage.setItem("victorStoreCarrinho", JSON.stringify(carrinho));
             atualizarCarrinho();
         }
@@ -625,6 +626,26 @@ function adicionarVariacaoAoCarrinho(indice, variacao) {
             salvarCarrinho();
         }
 let valorFrete = 0;
+let freteSelecionado = null;
+let consultaFreteAtual = 0;
+function tipoEntrega() {
+    return document.querySelector('input[name="shipping-option"]:checked')?.value || "calcular";
+}
+function limparFreteCalculado() {
+    consultaFreteAtual++;
+    valorFrete = 0;
+    freteSelecionado = null;
+    document.getElementById("shipping-result").replaceChildren();
+}
+function validarFreteCheckout() {
+    if (tipoEntrega() !== "calcular") return true;
+    const cep = document.getElementById("shipping-cep").value.replace(/\D/g, "");
+    if (!freteSelecionado || freteSelecionado.cep !== cep) {
+        alert("Calcule o frete e selecione uma opção antes de gerar o Pix.");
+        return false;
+    }
+    return true;
+}
         function atualizarCarrinho() {
             const cartItems = document.getElementById("cart-items");
             const cartCount = document.getElementById("cart-count");
@@ -645,6 +666,8 @@ let valorFrete = 0;
                         <a href="#produtos" onclick="fecharCarrinho()">Ver produtos</a>
                     </div>
                 `;
+                document.getElementById("cart-subtotal").textContent = dinheiro.format(0);
+                document.getElementById("cart-shipping").textContent = "A calcular";
                 cartTotal.textContent = dinheiro.format(0);
                 checkoutButton.disabled = true;
                 return;
@@ -696,11 +719,13 @@ let valorFrete = 0;
     'input[name="shipping-option"]:checked'
 )?.value;
 
+const freteCobrado = tipoFreteSelecionado === "calcular" && freteSelecionado ? valorFrete : 0;
 document.getElementById("cart-shipping").textContent =
-    tipoFreteSelecionado === "combinar"
-        ? "A combinar"
-        : (valorFrete > 0 ? dinheiro.format(valorFrete) : "A calcular");
-cartTotal.textContent = dinheiro.format(total + valorFrete);
+    tipoFreteSelecionado === "retirada" ? dinheiro.format(0) :
+    tipoFreteSelecionado === "topic" ? "Pago à Topic" :
+    tipoFreteSelecionado === "combinar" ? "A combinar" :
+    freteSelecionado ? dinheiro.format(freteCobrado) : "A calcular";
+cartTotal.textContent = dinheiro.format(total + freteCobrado);
             checkoutButton.disabled = false;
         }
 
@@ -1040,6 +1065,7 @@ botao.onclick = () => adicionarVariacaoAoCarrinho(indice, variacao);
         
         async function iniciarCheckout() {
     if (carrinho.length === 0) return;
+    if (!validarFreteCheckout()) return;
 
  const dadosCliente = await new Promise((resolve) => {
     const checkout = document.createElement("div");
@@ -1236,13 +1262,16 @@ const {
     telefone
 } = dadosCliente;  
 
-    const total = carrinho.reduce((soma, item) => {
+    if (!validarFreteCheckout()) return;
+    const subtotalProdutos = carrinho.reduce((soma, item) => {
         const produto = produtoPorIndice(item.indice);
         return soma + (Number(produto.preco) * item.quantidade);
     }, 0);
 const tipoFrete = document.querySelector(
     'input[name="shipping-option"]:checked'
 )?.value || "calcular";
+const freteCobrado = tipoFrete === "calcular" ? Number(freteSelecionado.preco) : 0;
+const total = Math.round((subtotalProdutos + freteCobrado) * 100) / 100;
 window.formaEntregaSelecionada = tipoFrete;
 const descricaoFrete =
     tipoFrete === "topic"
@@ -1251,7 +1280,7 @@ const descricaoFrete =
         ? "Retirada em Crateús"
         : tipoFrete === "combinar"
         ? "Frete a combinar com o vendedor"
-        : "Frete calculado pelo CEP";
+        : `${freteSelecionado.transportadora} — ${freteSelecionado.nome} • CEP ${freteSelecionado.cep} • Prazo: ${freteSelecionado.prazo ?? "a confirmar"}`;
     const pedido = {
         type: "online",
         total_amount: total.toFixed(2),
@@ -1386,6 +1415,8 @@ const resumoPedido = carrinho.map((item) => {
                 </h3>
 
                 ${resumoPedido}
+                <p style="text-align:left">Produtos: ${dinheiro.format(subtotalProdutos)}</p>
+                <p style="text-align:left">Frete: ${tipoFrete === "calcular" ? dinheiro.format(freteCobrado) : tipoFrete === "retirada" ? dinheiro.format(0) : tipoFrete === "topic" ? "Pago separadamente à Topic" : "A combinar, não incluído no Pix"}</p>
 <div style="
     display:flex;
     justify-content:space-between;
@@ -1548,146 +1579,89 @@ const resumoPedido = carrinho.map((item) => {
 }
 
 carregarProdutosSupabase();
- const opcoesFrete = document.querySelectorAll('input[name="shipping-option"]');
-const campoCepFrete = document.getElementById("shipping-cep");
+ const campoCepFrete = document.getElementById("shipping-cep");
 const botaoFrete = document.getElementById("shipping-calculate-button");
 const resultadoFrete = document.getElementById("shipping-result");
-
-opcoesFrete.forEach(opcao => {
-  opcao.addEventListener("change", () => {
-    const tipoFrete = document.querySelector(
-      'input[name="shipping-option"]:checked'
-    )?.value;
-
-   if (tipoFrete === "combinar") {
-    valorFrete = 0;
-
-    campoCepFrete.disabled = true;
-    botaoFrete.disabled = true;
-    campoCepFrete.value = "";
-
-    resultadoFrete.textContent =
-        "Frete a combinar com o vendedor. Entraremos em contato após a compra.";
-
-    document.getElementById("cart-shipping").textContent = "A combinar";
-
-    const infoBox = document.getElementById("shipping-info-box");
-    if (infoBox) {
-        infoBox.textContent =
-            "O valor e o prazo da entrega serão informados após a compra. A Victor Store entrará em contato com você.";
-    }
-
-    atualizarCarrinho();
-
-} else if (tipoFrete === "topic") {
-    valorFrete = 0;
-
-    campoCepFrete.disabled = true;
-    botaoFrete.disabled = true;
-    campoCepFrete.value = "";
-
-    resultadoFrete.textContent =
-        "Entrega regional por Topic selecionada.";
-
-    document.getElementById("cart-shipping").textContent = "Pago à Topic";
-
-    const infoBox = document.getElementById("shipping-info-box");
-    if (infoBox) {
-        infoBox.textContent =
-            "A Victor Store poderá enviar seu pedido por Topic que atende a região. O valor do transporte será informado antes do envio e poderá ser pago no envio ou no recebimento, conforme disponibilidade do transportador. Esse valor não será cobrado junto com a compra no site.";
-    }
-
-    atualizarCarrinho();
-
-} else if (tipoFrete === "retirada") {
-    valorFrete = 0;
-
-    campoCepFrete.disabled = true;
-    botaoFrete.disabled = true;
-    campoCepFrete.value = "";
-
-    resultadoFrete.textContent =
-        "Retirada em Crateús selecionada.";
-
-    document.getElementById("cart-shipping").textContent = "R$ 0,00";
-
-    const infoBox = document.getElementById("shipping-info-box");
-    if (infoBox) {
-        infoBox.textContent =
-            "Retirada em Crateús sem custo de frete. A Victor Store informará o local e o horário para retirada após a confirmação do pedido.";
-    }
-
-    atualizarCarrinho();
-
-} else {
-    campoCepFrete.disabled = false;
-    botaoFrete.disabled = false;
-
-    resultadoFrete.textContent = "";
-
-    document.getElementById("cart-shipping").textContent = "A calcular";
-
-    const infoBox = document.getElementById("shipping-info-box");
-    if (infoBox) {
-        infoBox.textContent =
-            "Digite seu CEP para consultar as opções de frete disponíveis.";
-    }
-
+function atualizarFormaEntrega() {
+    limparFreteCalculado();
+    const tipo = tipoEntrega();
+    campoCepFrete.disabled = tipo !== "calcular";
+    botaoFrete.disabled = tipo !== "calcular";
+    const mensagens = {
+        calcular: "Digite seu CEP, calcule e selecione uma opção de frete.",
+        topic: "Entrega regional por Topic. O transporte será combinado antes do envio e pago separadamente, conforme disponibilidade do transportador.",
+        retirada: "Retirada em Crateús sem custo de frete. Combinaremos local e horário após a confirmação do pedido.",
+        combinar: "Frete a combinar com o vendedor. Valor e prazo serão definidos por contato; o frete não está incluído no Pix."
+    };
+    document.getElementById("shipping-info-box").textContent = mensagens[tipo];
     atualizarCarrinho();
 }
-  });
+document.querySelectorAll('input[name="shipping-option"]').forEach(opcao => {
+    opcao.addEventListener("change", atualizarFormaEntrega);
 });
-        const botaoCalcularFrete = document.getElementById("shipping-calculate-button");
-
-if (botaoCalcularFrete) {
-  botaoCalcularFrete.addEventListener("click", async () => {
-    const campoCep = document.getElementById("shipping-cep");
-    const resultado = document.getElementById("shipping-result");
-
-    const cep = campoCep.value.replace(/\D/g, "");
-
-    if (cep.length !== 8) {
-      resultado.textContent = "Digite um CEP válido com 8 números.";
-      return;
-    }
-
-    resultado.textContent = "Calculando...";
-
-    try {
-      const resposta = await fetch("/api/calcular-frete", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({ cep })
-      });
-
-      const dados = await resposta.json();
-
-      if (!resposta.ok) {
-        resultado.textContent = dados.error || "Não foi possível calcular o frete.";
+campoCepFrete.addEventListener("input", () => {
+    limparFreteCalculado();
+    atualizarCarrinho();
+});
+botaoFrete.addEventListener("click", async () => {
+    const cep = campoCepFrete.value.replace(/\D/g, "");
+    limparFreteCalculado();
+    atualizarCarrinho();
+    if (!carrinho.length) {
+        resultadoFrete.textContent = "Adicione um produto ao carrinho antes de calcular.";
         return;
-      }
-
-      if (!dados.freteDisponivel || !dados.opcoes || dados.opcoes.length === 0) {
-  resultado.textContent = "Nenhuma opção de frete encontrada para este CEP.";
-  return;
-}
-
-resultado.innerHTML = dados.opcoes.map(opcao => `
-  <div style="margin-top:10px; padding:10px; border:1px solid #ddd; border-radius:8px;">
-    <strong>${opcao.transportadora} - ${opcao.nome}</strong><br>
-    Frete: R$ ${Number(opcao.preco).toFixed(2).replace(".", ",")}<br>
-    Prazo estimado: ${opcao.prazo} dia(s)
-  </div>
-`).join("");
-
-    } catch (erro) {
-      console.error("Erro ao calcular frete:", erro);
-      resultado.textContent = "Erro ao consultar o frete.";
     }
-  });
-}
+    if (cep.length !== 8) {
+        resultadoFrete.textContent = "Digite um CEP válido com 8 números.";
+        return;
+    }
+    const consulta = consultaFreteAtual;
+    resultadoFrete.textContent = "Calculando...";
+    try {
+        const resposta = await fetch("/api/calcular-frete", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ cep })
+        });
+        const dados = await resposta.json();
+        if (consulta !== consultaFreteAtual) return;
+        if (!resposta.ok) {
+            resultadoFrete.textContent = dados.error || "Não foi possível calcular o frete.";
+            return;
+        }
+        const opcoes = Array.isArray(dados.opcoes) ? dados.opcoes.filter(opcao =>
+            opcao.preco != null && opcao.preco !== "" &&
+            Number.isFinite(Number(opcao.preco)) && Number(opcao.preco) >= 0
+        ) : [];
+        if (!dados.freteDisponivel || !opcoes.length) {
+            resultadoFrete.textContent = "Nenhuma opção de frete encontrada para este CEP.";
+            return;
+        }
+        resultadoFrete.replaceChildren();
+        opcoes.forEach(opcao => {
+            const etiqueta = document.createElement("label");
+            etiqueta.style.cssText = "display:block;margin-top:10px;padding:12px;border:1px solid #ddd;border-radius:8px;cursor:pointer;";
+            const radio = document.createElement("input");
+            radio.type = "radio";
+            radio.name = "servico-frete";
+            radio.style.marginRight = "8px";
+            const texto = document.createElement("span");
+            const prazo = opcao.prazo == null ? "prazo a confirmar" : `${opcao.prazo} dia(s)`;
+            texto.textContent = `${opcao.transportadora} — ${opcao.nome}: ${dinheiro.format(Number(opcao.preco))} • ${prazo}`;
+            radio.addEventListener("change", () => {
+                freteSelecionado = { ...opcao, cep, preco: Number(opcao.preco) };
+                valorFrete = freteSelecionado.preco;
+                atualizarCarrinho();
+            });
+            etiqueta.append(radio, texto);
+            resultadoFrete.appendChild(etiqueta);
+        });
+    } catch (erro) {
+        if (consulta !== consultaFreteAtual) return;
+        console.error("Erro ao calcular frete:", erro);
+        resultadoFrete.textContent = "Erro ao consultar o frete.";
+    }
+});
     </script>
 
 </body>
