@@ -20,6 +20,16 @@
         rel="stylesheet">
 
     <link rel="stylesheet" href="style.css?=5">
+<style>
+/* O painel inteiro rola; o botão permanece acessível ao final. */
+#cart-drawer { display:block; height:100vh; height:100dvh; overflow-y:auto; overflow-x:hidden; box-sizing:border-box; padding:0 20px 24px; overscroll-behavior:contain; }
+#cart-drawer .cart-header { position:sticky; top:0; z-index:2; background:#0d0d0d; margin:0 -20px 16px; padding:22px 20px; }
+#cart-items { flex:none; height:auto; max-height:none; overflow:visible; padding:0; }
+#cart-drawer .cart-total-line { gap:12px; }
+#cart-drawer .shipping-box { margin-top:18px; }
+#checkout-button { position:sticky; bottom:0; z-index:3; display:block; width:100%; min-height:52px; margin-top:18px; box-shadow:0 0 0 8px #0d0d0d; }
+#cart-drawer > small { display:block; margin-top:16px; padding-bottom:12px; }
+</style>
 </head>
 
 <body>
@@ -540,6 +550,21 @@
         function produtoPorIndice(indice) {
             return produtos[indice];
         }
+        function conferirItensCarrinho(avisar = false) {
+            const antes = carrinho.length;
+            carrinho = carrinho.filter(item => {
+                const produto = produtoPorIndice(item.indice);
+                return produto && Number.isFinite(Number(produto.preco)) &&
+                    Number(produto.preco) > 0 && Number.isInteger(item.quantidade) && item.quantidade > 0;
+            });
+            if (antes !== carrinho.length) {
+                limparFreteCalculado();
+                localStorage.setItem("victorStoreCarrinho", JSON.stringify(carrinho));
+                if (avisar) alert("Alguns itens salvos não estão disponíveis no catálogo atual e foram removidos. Confira os produtos e calcule o frete novamente.");
+                return false;
+            }
+            return true;
+        }
 
         function adicionarAoCarrinho(indice) {
             const produto = produtoPorIndice(indice);
@@ -647,6 +672,7 @@ function validarFreteCheckout() {
     return true;
 }
         function atualizarCarrinho() {
+            conferirItensCarrinho();
             const cartItems = document.getElementById("cart-items");
             const cartCount = document.getElementById("cart-count");
             const cartTotal = document.getElementById("cart-total");
@@ -1064,6 +1090,7 @@ botao.onclick = () => adicionarVariacaoAoCarrinho(indice, variacao);
 
         
         async function iniciarCheckout() {
+    if (!conferirItensCarrinho(true)) { atualizarCarrinho(); return; }
     if (carrinho.length === 0) return;
     if (!validarFreteCheckout()) return;
 
@@ -1262,6 +1289,7 @@ const {
     telefone
 } = dadosCliente;  
 
+    if (!conferirItensCarrinho(true)) { atualizarCarrinho(); return; }
     if (!validarFreteCheckout()) return;
     const subtotalProdutos = carrinho.reduce((soma, item) => {
         const produto = produtoPorIndice(item.indice);
@@ -1336,7 +1364,18 @@ const pix = pagamento?.payment_method;
 if (pix?.qr_code) {
     const qrBase64 = pix.qr_code_base64;
 
-    const janelaPix = window.open("", "_blank");
+    const painelPix = document.createElement("div");
+    painelPix.style.cssText = "position:fixed;inset:0;z-index:100000;background:#f3f4f6;";
+    const fecharPix = document.createElement("button");
+    fecharPix.textContent = "Fechar pagamento e voltar à loja";
+    fecharPix.style.cssText = "position:absolute;top:8px;right:16px;z-index:2;padding:12px;border:0;border-radius:8px;background:#111;color:#fff;cursor:pointer;";
+    const quadroPix = document.createElement("iframe");
+    quadroPix.title = "Pagamento Pix Victor Store";
+    quadroPix.style.cssText = "width:100%;height:100%;border:0;padding-top:52px;box-sizing:border-box;";
+    painelPix.append(fecharPix, quadroPix);
+    document.body.appendChild(painelPix);
+    fecharPix.onclick = () => painelPix.remove();
+    const janelaPix = quadroPix.contentWindow;
 const resumoPedido = carrinho.map((item) => {
     const produto = produtoPorIndice(item.indice);
     const subtotal = Number(produto.preco) * item.quantidade;
@@ -1489,7 +1528,7 @@ const resumoPedido = carrinho.map((item) => {
             </button>
 
             <button
-                onclick="window.opener ? window.opener.focus() : null; window.close();"
+                onclick="window.frameElement.parentElement.remove();"
                 style="
                     width:100%;
                     padding:13px;
