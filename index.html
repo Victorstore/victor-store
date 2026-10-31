@@ -627,30 +627,35 @@ function adicionarVariacaoAoCarrinho(indice, variacao) {
     fecharDetalhes();
     abrirCarrinho();
 }
-        function alterarQuantidade(indice, delta) {
-            const item = carrinho.find(item => item.indice === indice);
+        function alterarQuantidade(indice, delta, variacaoId = null) {
+            const item = carrinho.find(item =>
+                item.indice === indice &&
+                String(item.variacao_id ?? "") === String(variacaoId ?? "")
+            );
             if (!item) return;
-
             const produto = produtoPorIndice(indice);
-            const estoque = estoqueProduto(produto);
+            if (!produto) return;
+            const estoque = item.variacao_id != null
+                ? Number(item.estoque_variacao)
+                : estoqueProduto(produto);
             const novaQuantidade = item.quantidade + delta;
-
             if (novaQuantidade <= 0) {
-                removerDoCarrinho(indice);
+                removerDoCarrinho(indice, variacaoId);
                 return;
             }
-
-            if (novaQuantidade > estoque) {
+            if (!Number.isFinite(estoque) || novaQuantidade > estoque) {
                 alert("Quantidade maior que o estoque disponível.");
                 return;
             }
-
             item.quantidade = novaQuantidade;
             salvarCarrinho();
         }
 
-        function removerDoCarrinho(indice) {
-            carrinho = carrinho.filter(item => item.indice !== indice);
+        function removerDoCarrinho(indice, variacaoId = null) {
+            carrinho = carrinho.filter(item => !(
+                item.indice === indice &&
+                String(item.variacao_id ?? "") === String(variacaoId ?? "")
+            ));
             salvarCarrinho();
         }
 let valorFrete = 0;
@@ -726,16 +731,16 @@ function validarFreteCheckout() {
 
                             <div class="quantity-control">
                                 <button type="button"
-                                    onclick="alterarQuantidade(${item.indice}, -1)">−</button>
+                                    onclick="alterarQuantidade(${item.indice}, -1, ${item.variacao_id ?? 'null'})">−</button>
 
                                 <span>${item.quantidade}</span>
 
                                 <button type="button"
-                                    onclick="alterarQuantidade(${item.indice}, 1)">+</button>
+                                    onclick="alterarQuantidade(${item.indice}, 1, ${item.variacao_id ?? 'null'})">+</button>
                             </div>
 
                             <button class="remove-item" type="button"
-                                onclick="removerDoCarrinho(${item.indice})">
+                                onclick="removerDoCarrinho(${item.indice}, ${item.variacao_id ?? 'null'})">
                                 Remover
                             </button>
                         </div>
@@ -939,7 +944,11 @@ cartTotal.textContent = dinheiro.format(total + freteCobrado);
                 throw new Error("Não foi possível carregar as variações.");
             }
 
-            const variacoes = dados.variacoes;
+            const variacoes = dados.variacoes.map(v => ({
+                ...v,
+                faixa: String(v.faixa ?? "").trim().toLowerCase(),
+                cor: String(v.cor ?? "").trim()
+            }));
 
             const faixas = [...new Set(
                 variacoes.map(v => v.faixa).filter(Boolean)
@@ -947,7 +956,7 @@ cartTotal.textContent = dinheiro.format(total + freteCobrado);
 
             faixas.forEach(faixa => {
                 selectFaixa.innerHTML +=
-                    `<option value="${faixa}">${faixa}</option>`;
+                    `<option value="${faixa}">${faixa.charAt(0).toUpperCase() + faixa.slice(1)}</option>`;
             });
 
             selectFaixa.onchange = () => {
