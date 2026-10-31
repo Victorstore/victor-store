@@ -1352,6 +1352,24 @@ const descricaoFrete =
 }
     };
 
+    pedido.detalhes_loja = {
+        itens: carrinho.map(item => {
+            const produto = produtoPorIndice(item.indice);
+            const faixa = String(item.faixa || "");
+            return {
+                produto_id: produto.id,
+                variacao_id: item.variacao_id ?? null,
+                nome: produto.nome,
+                variacao: item.variacao_id != null
+                    ? [faixa.charAt(0).toUpperCase() + faixa.slice(1), item.cor, "Nº " + item.numero].join(" · ")
+                    : "",
+                quantidade: item.quantidade,
+                preco: Number(produto.preco)
+            };
+        }),
+        frete: tipoFrete === "calcular" ? { ...freteSelecionado } : { tipo: tipoFrete, preco: 0 }
+    };
+
     try {
         const resposta = await fetch("/api/create-order", {
             method: "POST",
@@ -1388,6 +1406,9 @@ if (pix?.qr_code) {
     document.body.appendChild(painelPix);
     fecharPix.onclick = () => painelPix.remove();
     const janelaPix = quadroPix.contentWindow;
+const escaparResumo = valor => String(valor ?? "").replace(/[&<>"']/g, c => ({
+    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+}[c]));
 const resumoPedido = carrinho.map((item) => {
     const produto = produtoPorIndice(item.indice);
     const subtotal = Number(produto.preco) * item.quantidade;
@@ -1402,7 +1423,7 @@ const resumoPedido = carrinho.map((item) => {
             text-align:left;
             font-size:14px;
         ">
-            <span>${produto.nome} × ${item.quantidade}</span>
+            <span>${escaparResumo(produto.nome)} × ${item.quantidade}${item.variacao_id != null ? `<br><small>${escaparResumo([item.faixa, item.cor, "Nº " + item.numero].join(" · "))}</small>` : ""}</span>
             <strong>R$ ${subtotal.toFixed(2).replace(".", ",")}</strong>
         </div>
     `;
