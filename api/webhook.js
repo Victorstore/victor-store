@@ -128,7 +128,6 @@ export default async function handler(req, res) {
       });
     }
 
-    // Este endpoint recebe eventos da API de Orders.
     if (req.body?.type && req.body.type !== "order") {
       return res.status(200).json({
         received: true,
@@ -152,7 +151,7 @@ export default async function handler(req, res) {
       });
     }
 
-    // Confirma o status diretamente no Mercado Pago.
+    // Consulta o status diretamente no Mercado Pago.
     const resposta = await fetch(
       `https://api.mercadopago.com/v1/orders/${encodeURIComponent(dataId)}`,
       {
@@ -208,6 +207,7 @@ export default async function handler(req, res) {
           id,
           referencia,
           mercado_pago_order_id,
+          mercado_pago_payment_id,
           total,
           status,
           status_pagamento,
@@ -217,9 +217,7 @@ export default async function handler(req, res) {
         .maybeSingle();
 
     if (erroBusca || !pedido) {
-      console.error(
-        "Pedido da notificação ainda não localizado."
-      );
+      console.error("Pedido não localizado.");
 
       return res.status(503).json({
         error: "Pedido não localizado."
@@ -260,7 +258,6 @@ export default async function handler(req, res) {
 
     const status = statusDaLoja(order);
 
-    // Evita que uma leitura antiga reabra um pedido pago.
     const posteriores = [
       "pago",
       "parcialmente_reembolsado",
@@ -268,6 +265,7 @@ export default async function handler(req, res) {
       "em_contestacao"
     ];
 
+    // Impede que uma leitura antiga reabra um pedido pago.
     if (
       posteriores.includes(pedido.status) &&
       !posteriores.includes(status)
@@ -306,45 +304,79 @@ export default async function handler(req, res) {
       ? String(pagamentos[0].id)
       : null;
 
-    // Notificações repetidas não precisam alterar o pedido.
-    if (
+    const semAlteracao =
       pedido.status === status &&
       pedido.status_pagamento === statusPagamento &&
-      pedido.mercado_pago_order_id === String(order.id)
-    ) {
+      pedido.mercado_pago_order_id === String(order.id) &&
+      pedido.mercado_pago_payment_id === pagamentoId;
+
+    if (!semAlteracao) {
+      const { data: atualizados, error: erroUpdate } =
+        await supabase
+          .from("pedidos")
+          .update({
+            mercado_pago_order_id: String(order.id),
+            mercado_pago_payment_id: pagamentoId,
+            status,
+            status_pagamento: statusPagamento
+          })
+          .eq("id", pedido.id)
+          .eq("updated_at", pedido.updated_at)
+          .select("id");
+
+      if (erroUpdate || !atualizados?.length) {
+        return res.status(503).json({
+          error: "Não foi possível atualizar o pedido."
+        });
+      }
+
+      console.log(
+        "Status do pedido atualizado:",
+        pedido.id,
+        status
+      );
+    }
+
+    // Executa também em notificações repetidas.
+    // A função SQL impede descontar duas vezes.
+    if (status === "pago") {
+      const { data: baixa, error: erroBaixa } =
+        await supabase.rpc("baixar_estoque_pedido", {
+          p_pedido_id: pedido.id
+        });
+
+      if (erroBaixa || baixa?.ok !== true) {
+        console.error(
+          "Pagamento registrado; baixa de estoque pendente:",
+          pedido.id,
+          erroBaixa?.message || "Resposta inválida."
+        );
+
+        return res.status(503).json({
+          received: true,
+          error: "Pagamento registrado; baixa de estoque pendente."
+        });
+      }
+
+      console.log(
+        "Estoque do pedido:",
+        pedido.id,
+        baixa.ja_baixado
+          ? "Baixa já realizada anteriormente."
+          : "Baixa realizada."
+      );
+
       return res.status(200).json({
         received: true,
-        unchanged: true
+        estoque: baixa.ja_baixado
+          ? "ja_baixado"
+          : "baixado"
       });
     }
-
-    const { data: atualizados, error: erroUpdate } =
-      await supabase
-        .from("pedidos")
-        .update({
-          mercado_pago_order_id: String(order.id),
-          mercado_pago_payment_id: pagamentoId,
-          status,
-          status_pagamento: statusPagamento
-        })
-        .eq("id", pedido.id)
-        .eq("updated_at", pedido.updated_at)
-        .select("id");
-
-    if (erroUpdate || !atualizados?.length) {
-      return res.status(503).json({
-        error: "Não foi possível atualizar o pedido."
-      });
-    }
-
-    console.log(
-      "Status do pedido atualizado:",
-      pedido.id,
-      status
-    );
 
     return res.status(200).json({
-      received: true
+      received: true,
+      unchanged: semAlteracao
     });
   } catch (erro) {
     console.error("Erro no webhook:", erro.message);
