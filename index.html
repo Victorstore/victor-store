@@ -1138,7 +1138,14 @@ botao.onclick = () => adicionarVariacaoAoCarrinho(indice, variacao, Number(quant
         }
 
         
+        let checkoutEmAndamento = false;
         async function iniciarCheckout() {
+            if (checkoutEmAndamento) return;
+            checkoutEmAndamento = true;
+            try { await executarCheckout(); }
+            finally { checkoutEmAndamento = false; }
+        }
+        async function executarCheckout() {
     if (!conferirItensCarrinho(true)) { atualizarCarrinho(); return; }
     if (carrinho.length === 0) return;
     if (!validarFreteCheckout()) return;
@@ -1255,6 +1262,12 @@ botao.onclick = () => adicionarVariacaoAoCarrinho(indice, variacao, Number(quant
                         "
                     >
 
+                    <label for="checkout-pagamento" style="display:block;margin-bottom:6px;font-weight:600;">Forma de pagamento</label>
+                    <select id="checkout-pagamento" name="pagamento" style="width:100%;padding:13px;margin-bottom:16px;border:1px solid #ccc;border-radius:8px;background:#fff;color:#111;">
+                        <option value="pix_orders">Pix direto na loja</option>
+                        <option value="checkout_pro">Cartão e outros meios — Mercado Pago</option>
+                    </select>
+                    <p style="font-size:12px;color:#555;margin:0 0 16px;">Ambiente de teste. Para cartão, você continuará na página do Mercado Pago.</p>
                     <button
                         type="submit"
                         style="
@@ -1314,7 +1327,8 @@ botao.onclick = () => adicionarVariacaoAoCarrinho(indice, variacao, Number(quant
             nome: formulario.get("nome").trim(),
             cpf: formulario.get("cpf").trim(),
             email: formulario.get("email").trim(),
-            telefone: formulario.get("telefone").trim()
+            telefone: formulario.get("telefone").trim(),
+            checkoutTipo: formulario.get("pagamento")
         };
 
         if (!dados.nome || !dados.cpf || !dados.email || !dados.telefone) {
@@ -1335,7 +1349,8 @@ const {
     nome,
     cpf,
     email,
-    telefone
+    telefone,
+    checkoutTipo
 } = dadosCliente;  
 
     if (!conferirItensCarrinho(true)) { atualizarCarrinho(); return; }
@@ -1407,6 +1422,7 @@ const descricaoFrete =
         frete: tipoFrete === "calcular" ? { ...freteSelecionado } : { tipo: tipoFrete, preco: 0 }
     };
 
+    pedido.checkout_tipo = checkoutTipo;
     const carrinhoDoPedido = JSON.stringify(carrinho);
     try {
         const resposta = await fetch("/api/create-order", {
@@ -1422,10 +1438,23 @@ const descricaoFrete =
 
 
         if (!resposta.ok) {
-            alert("Não foi possível gerar o Pix. Veja o console para mais detalhes.");
+            alert(dados.error || "Não foi possível iniciar o pagamento. Tente novamente.");
             return;
         }
 
+        if (dados.checkout_tipo === "checkout_pro") {
+            const destino = new URL(dados.checkout_url);
+            if (destino.protocol !== "https:" || destino.hostname !== "www.mercadopago.com.br") {
+                throw new Error("URL de pagamento inválida");
+            }
+            // Guarde antes de sair. A volta nunca usa o status informado na URL.
+            sessionStorage.setItem("victorStoreCheckoutPro:" + dados.pedido_local_id, JSON.stringify({
+                pedido_id: dados.pedido_local_id, token: dados.consulta_token,
+                carrinho: carrinhoDoPedido, criado_em: Date.now()
+            }));
+            window.location.assign(destino.href);
+            return;
+        }
        const pagamento = dados.transactions?.payments?.[0];
 const pix = pagamento?.payment_method;
 
@@ -1804,7 +1833,14 @@ const resumoPedido = carrinho.map((item) => {
     atualizarCarrinho();
 }
 
-carregarProdutosSupabase();
+carregarProdutosSupabase().then(() => {
+    const parametros = new URLSearchParams(location.search);
+    if (parametros.get("abrir_carrinho") === "1") {
+        abrirCarrinho();
+        parametros.delete("abrir_carrinho");
+        history.replaceState(null, "", location.pathname + (parametros.size ? "?" + parametros.toString() : "") + location.hash);
+    }
+});
  const campoCepFrete = document.getElementById("shipping-cep");
 const botaoFrete = document.getElementById("shipping-calculate-button");
 const resultadoFrete = document.getElementById("shipping-result");

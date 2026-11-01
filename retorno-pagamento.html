@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow"><meta name="referrer" content="no-referrer">
+<title>Pagamento | Victor Store</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#f3f4f6;color:#171717;font:16px Arial,sans-serif;padding:24px}main{max-width:620px;margin:8vh auto;background:white;border-radius:18px;padding:32px;text-align:center}h1{font-size:28px}p{line-height:1.55}#pedido{overflow-wrap:anywhere;font-size:13px;color:#555}.marca{font-weight:bold;letter-spacing:2px;color:#e50914}button,a{display:inline-block;border:0;border-radius:8px;padding:14px 20px;margin:6px;font:inherit;text-decoration:none;cursor:pointer}button{background:#e50914;color:white}a{background:#eee;color:#171717}button:disabled{opacity:.6}#teste{font-size:13px;color:#555}
+</style>
+</head>
+<body><main>
+<p class="marca">VICTOR STORE</p>
+<div role="status" aria-live="polite"><h1 id="titulo">Conferindo o pagamento</h1><p id="mensagem">Aguarde enquanto consultamos a confirmação do seu pedido.</p></div>
+<p id="pedido"></p><p id="nota"></p><p id="teste">Ambiente de teste — use apenas dados de teste.</p>
+<button id="consultar" type="button">Consultar novamente</button>
+<a href="/?abrir_carrinho=1#produtos" id="voltar">Voltar à loja</a>
+</main>
+<script>
+const el = id => document.getElementById(id);
+const id = new URLSearchParams(location.search).get("pedido");
+let contexto = null, consultando = false, encerrado = false, timer = null;
+const inicio = Date.now();
+try { contexto = JSON.parse(sessionStorage.getItem("victorStoreCheckoutPro:" + id)); } catch {}
+function mostrar(titulo, mensagem) { el("titulo").textContent = titulo; el("mensagem").textContent = mensagem; }
+function limparCarrinhoPago() {
+  const salvo = localStorage.getItem("victorStoreCarrinho");
+  if (salvo === contexto.carrinho) {
+    localStorage.setItem("victorStoreCarrinho", "[]");
+    el("nota").textContent = "Os itens desta compra foram retirados do carrinho.";
+  } else if (!salvo || salvo === "[]") {
+    el("nota").textContent = "Seu carrinho está vazio.";
+  } else {
+    el("nota").textContent = "Seu carrinho foi alterado e foi preservado. Confira os itens antes de outra compra.";
+  }
+}
+async function consultar() {
+  if (consultando || encerrado) return;
+  clearTimeout(timer);
+  if (!contexto || contexto.pedido_id !== id || !contexto.token) {
+    mostrar("Consulta indisponível nesta aba", "Abra o retorno na mesma aba em que iniciou a compra. Se não conseguir, entre em contato com a loja antes de tentar pagar novamente.");
+    el("consultar").hidden = true;
+    return;
+  }
+  consultando = true; el("consultar").disabled = true;
+  try {
+    const r = await fetch("/api/status-pedido", {
+      method:"POST", headers:{"Content-Type":"application/json"}, cache:"no-store",
+      signal:AbortSignal.timeout(40000), body:JSON.stringify({pedido_id:id,token:contexto.token})
+    });
+    if ([401,403].includes(r.status)) {
+      encerrado = true;
+      mostrar("Consulta expirada", "Entre em contato com a loja para conferir o pedido antes de realizar outro pagamento.");
+      return;
+    }
+    if (!r.ok) throw new Error("Indisponível");
+    const dados = await r.json();
+    el("pedido").textContent = "Pedido: " + id;
+    el("teste").textContent = dados.ambiente === "teste" ? "Ambiente de teste — nenhum pagamento real." : "";
+    if (dados.status === "pago") {
+      encerrado = true;
+      mostrar("Pagamento confirmado", "Recebemos a confirmação do pagamento do seu pedido.");
+      el("titulo").style.color = "#16733b";
+      limparCarrinhoPago();
+    } else if (["falhou","cancelado","expirado"].includes(dados.status)) {
+      // O mesmo checkout pode ter novas tentativas. Não aceite este resultado como pagamento.
+      mostrar(dados.status === "falhou" ? "Pagamento não aprovado" : "Pagamento encerrado", "Esta tentativa não foi aprovada. Seu carrinho foi preservado. Se você tentou outro pagamento neste checkout, aguarde a atualização antes de iniciar outra compra.");
+      el("nota").textContent = "Nenhum item foi retirado do carrinho por esta tentativa.";
+    } else if (["reembolsado","parcialmente_reembolsado","em_contestacao"].includes(dados.status)) {
+      encerrado = true;
+      mostrar("Confira a situação do pedido", "Situação: " + dados.status.replaceAll("_", " ") + ". Entre em contato com a loja.");
+    } else {
+      mostrar("Aguardando confirmação", "O pagamento ainda não foi confirmado. Em pagamentos pendentes, aguarde a confirmação antes de iniciar outra compra. Consultaremos novamente automaticamente.");
+    }
+  } catch {
+    mostrar("Confirmação temporariamente indisponível", "Não foi possível consultar agora. Tentaremos novamente. Entre em contato com a loja antes de realizar outro pagamento se a dúvida continuar.");
+  } finally {
+    consultando = false; el("consultar").disabled = false;
+    el("consultar").hidden = encerrado;
+    if (!encerrado && Date.now() - inicio < 1200000) timer = setTimeout(consultar, 8000);
+  }
+}
+el("consultar").onclick = consultar;
+consultar();
+</script></body></html>

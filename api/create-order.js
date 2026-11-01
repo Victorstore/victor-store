@@ -1,5 +1,6 @@
 import crypto from "node:crypto";
 import { createClient } from "@supabase/supabase-js";
+import { consultarMP } from "../lib/pagamentos.js";
 
 const escapar = (valor) =>
   String(valor ?? "").replace(/[&<>"']/g, (c) => ({
@@ -17,6 +18,7 @@ const moeda = (valor) =>
   }).format(Number(valor) || 0);
 
 export default async function handler(req, res) {
+  res.setHeader("Cache-Control", "private, no-store");
   if (req.method !== "POST") {
     return res.status(405).json({
       error: "Método não permitido"
@@ -44,9 +46,21 @@ export default async function handler(req, res) {
     // Os detalhes da loja não são enviados ao Mercado Pago.
     const {
       detalhes_loja: detalhes = {},
+      checkout_tipo: checkoutTipo = "pix_orders",
       ...pedido
     } = req.body || {};
 
+    if (!["pix_orders", "checkout_pro"].includes(checkoutTipo)) {
+      return res.status(400).json({ error: "Forma de pagamento inválida." });
+    }
+    const pro = checkoutTipo === "checkout_pro";
+    // Bloqueia o Checkout Pro se a credencial pertencer a um vendedor real.
+    if (pro) {
+      const vendedor = await consultarMP("/users/me", accessToken);
+      if (!Array.isArray(vendedor.tags) || !vendedor.tags.includes("test_user")) {
+        return res.status(503).json({ error: "Checkout Pro: configure o Access Token da conta vendedora de teste. Nenhum pagamento foi iniciado." });
+      }
+    }
     const url = process.env.SUPABASE_URL;
     const chave = process.env.SUPABASE_SECRET_KEY;
 
@@ -63,9 +77,7 @@ export default async function handler(req, res) {
       }
     });
 
-    const referencia = String(
-      pedido.external_reference || ""
-    );
+    let referencia = String(pedido.external_reference || "");
 
     const tipoEntrega = [
       "calcular",
@@ -131,6 +143,10 @@ export default async function handler(req, res) {
       });
     }
 
+    if (pro) {
+      referencia = `victor-store-${tipoEntrega}-pro-${crypto.randomUUID()}`;
+      pedido.external_reference = referencia;
+    }
     const itensParaSalvar = itensEntrada.map((item) => ({
       produto_id: item.produto_id,
       variacao_id: item.variacao_id ?? null,
@@ -218,43 +234,62 @@ export default async function handler(req, res) {
       preco: Number(item.preco_unitario)
     }));
 
+    // O tipo deve estar salvo antes de disponibilizar a URL ao comprador.
+    if (pro) {
+      const { error } = await supabase.from("pedidos").update({ checkout_tipo: "checkout_pro" })
+        .eq("id", pedidoLocalId).eq("status", "pendente");
+      if (error) throw new Error("Não foi possível preparar o Checkout Pro.");
+    }
+    let corpoMP = pedido;
+    if (pro) {
+      const origem = "https://victor-store-nine.vercel.app";
+      const retorno = `${origem}/retorno-pagamento.html?pedido=${encodeURIComponent(pedidoLocalId)}`;
+      const itensMP = itensSalvos.map((item, i) => ({
+        id: `${pedidoLocalId}-${i}`, title: item.produto_nome,
+        description: item.variacao_descricao || item.produto_nome,
+        quantity: Number(item.quantidade), unit_price: Number(item.preco_unitario), currency_id: "BRL"
+      }));
+      if (valorFrete > 0) itensMP.push({ id: "frete", title: "Frete da compra", quantity: 1, unit_price: valorFrete, currency_id: "BRL" });
+      corpoMP = {
+        items: itensMP,
+        payer: { name: nomeCliente, email: emailCliente },
+        external_reference: referencia,
+        back_urls: { success: retorno, failure: retorno, pending: retorno },
+        auto_return: "approved",
+        notification_url: `${origem}/api/webhook?source_news=webhooks`,
+        expires: true,
+        expiration_date_from: new Date(Date.now() - 60000).toISOString(),
+        expiration_date_to: new Date(Date.now() + 86400000).toISOString()
+      };
+    }
     envioIniciado = true;
-
-    const resposta = await fetch(
-      "https://api.mercadopago.com/v1/orders",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${accessToken}`,
-          "X-Idempotency-Key": pedidoLocalId
-        },
-        body: JSON.stringify(pedido)
-      }
-    );
-
+    const resposta = await fetch(pro ? "https://api.mercadopago.com/checkout/preferences" : "https://api.mercadopago.com/v1/orders", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${accessToken}`, "X-Idempotency-Key": pedidoLocalId },
+      body: JSON.stringify(corpoMP), signal: AbortSignal.timeout(15000)
+    });
     const dados = await resposta.json();
     respostaRecebida = true;
-
     const pagamento = dados.transactions?.payments?.[0];
-
+    let checkoutUrl = null;
+    if (pro && resposta.ok) {
+      const destino = new URL(dados.init_point);
+      if (destino.protocol !== "https:" || destino.hostname !== "www.mercadopago.com.br" || !dados.id) {
+        throw new Error("URL de checkout inválida.");
+      }
+      checkoutUrl = destino.href;
+    }
     const atualizacao = resposta.ok
-      ? {
-          mercado_pago_order_id:
-            dados.id ? String(dados.id) : null,
-          mercado_pago_payment_id:
-            pagamento?.id ? String(pagamento.id) : null,
+      ? (pro ? {
+          mercado_pago_preference_id: String(dados.id),
+          status: "aguardando_pagamento", status_pagamento: "aguardando_pagamento"
+        } : {
+          mercado_pago_order_id: dados.id ? String(dados.id) : null,
+          mercado_pago_payment_id: pagamento?.id ? String(pagamento.id) : null,
           status: "aguardando_pagamento",
-          status_pagamento: String(
-            pagamento?.status ||
-            dados.status ||
-            "aguardando_pagamento"
-          )
-        }
-      : {
-          status: "erro_pagamento",
-          status_pagamento: "criacao_recusada"
-        };
+          status_pagamento: String(pagamento?.status || dados.status || "aguardando_pagamento")
+        })
+      : { status: "erro_pagamento", status_pagamento: "criacao_recusada" };
 
     const { error: erroVinculo } = await supabase
       .from("pedidos")
@@ -262,6 +297,9 @@ export default async function handler(req, res) {
       .eq("id", pedidoLocalId)
       .eq("status", "pendente");
 
+    if (erroVinculo && pro) {
+      return res.status(503).json({ error: "Checkout criado, mas não foi possível vinculá-lo ao pedido. Entre em contato com a loja.", pedido_local_id: pedidoLocalId });
+    }
     if (erroVinculo) {
       console.error(
         "Falha ao vincular pagamento ao pedido:",
@@ -365,7 +403,7 @@ export default async function handler(req, res) {
 
               <p>
                 <strong>Status:</strong>
-                Aguardando pagamento via Pix
+                ${pro ? "Aguardando pagamento no Mercado Pago" : "Aguardando pagamento via Pix"}
               </p>
 
               <hr>
@@ -509,7 +547,7 @@ export default async function handler(req, res) {
     }
 
     return res.status(resposta.status).json({
-      ...dados,
+      ...(pro ? (resposta.ok ? { checkout_tipo: "checkout_pro", checkout_url: checkoutUrl } : { error: "Não foi possível abrir o Checkout Pro. Confira as credenciais de teste e a aplicação no Mercado Pago." }) : dados),
       pedido_local_id: pedidoLocalId,
       consulta_token: resposta.ok ? (() => {
         const expira = Math.floor(Date.now() / 1000) + 86400;
@@ -540,7 +578,8 @@ export default async function handler(req, res) {
               ? "resultado_desconhecido"
               : "nao_iniciado"
           })
-          .eq("id", pedidoLocalId);
+          .eq("id", pedidoLocalId)
+          .eq("status", "pendente");
       } catch {
         console.error(
           "Não foi possível atualizar o pedido:",
@@ -551,7 +590,7 @@ export default async function handler(req, res) {
 
     return res.status(500).json({
       error: envioIniciado
-        ? "Não foi possível confirmar o resultado do pagamento. Consulte o pedido na loja antes de gerar outro Pix."
+        ? "Não foi possível confirmar o resultado do pagamento. Consulte o pedido na loja antes de tentar novamente."
         : "Não foi possível preparar o pedido.",
       pedido_local_id: pedidoLocalId || null
     });

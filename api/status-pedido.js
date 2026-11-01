@@ -1,5 +1,6 @@
 import crypto from "node:crypto";
 import { createClient } from "@supabase/supabase-js";
+import { buscarPedido, sincronizarPro } from "../lib/pagamentos.js";
 
 export default async function handler(req, res) {
   res.setHeader("Cache-Control", "private, no-store");
@@ -29,9 +30,17 @@ export default async function handler(req, res) {
   try {
     const supabase = createClient(url, key, { auth: { persistSession: false } });
     const { data, error } = await supabase.from("pedidos")
-      .select("status,ambiente").eq("id", id).maybeSingle();
+      .select("status,ambiente,checkout_tipo").eq("id", id).maybeSingle();
     if (error) throw error;
     if (!data) return res.status(404).json({ ok: false, erro: "Pedido não encontrado." });
+    if (data.checkout_tipo === "checkout_pro") {
+      const tokenMP = process.env.MERCADO_PAGO_ACCESS_TOKEN;
+      if (!tokenMP) throw new Error("Credencial indisponível");
+      const pedido = await buscarPedido(supabase, "id", id);
+      await sincronizarPro(supabase, pedido, tokenMP);
+      const atualizado = await buscarPedido(supabase, "id", id);
+      return res.status(200).json({ ok: true, status: atualizado.status, ambiente: atualizado.ambiente });
+    }
     return res.status(200).json({ ok: true, status: data.status, ambiente: data.ambiente });
   } catch {
     return res.status(503).json({ ok: false, erro: "Não foi possível consultar o pedido." });

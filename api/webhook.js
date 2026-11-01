@@ -1,388 +1,54 @@
 import crypto from "node:crypto";
 import { createClient } from "@supabase/supabase-js";
-
-const texto = valor =>
-  typeof valor === "string" ? valor : "";
-
-function statusDaLoja(order) {
-  const status = texto(order.status);
-  const detalhe = texto(order.status_detail);
-
-  if (status === "processed" && detalhe === "accredited") {
-    return "pago";
-  }
-
-  if (
-    status === "processed" &&
-    detalhe === "partially_refunded"
-  ) {
-    return "parcialmente_reembolsado";
-  }
-
-  if (status === "refunded") return "reembolsado";
-  if (status === "charged_back") return "em_contestacao";
-
-  if (
-    detalhe === "expired" &&
-    ["failed", "canceled"].includes(status)
-  ) {
-    return "expirado";
-  }
-
-  if (status === "canceled") return "cancelado";
-  if (status === "failed") return "falhou";
-
-  if (
-    status === "action_required" &&
-    ["waiting_payment", "waiting_transfer"].includes(detalhe)
-  ) {
-    return "aguardando_pagamento";
-  }
-
-  if (status === "processing") return "em_processamento";
-
-  return "verificar_pagamento";
-}
+import { FalhaPagamento, consultarMP, buscarPedido, conferirValor, statusOrder, aplicarStatus, sincronizarPro } from "../lib/pagamentos.js";
+const texto = v => typeof v === "string" ? v : "";
 
 export default async function handler(req, res) {
-  if (req.method === "GET") {
-    return res.status(200).json({
-      ok: true,
-      message: "Webhook Victor Store ativo"
-    });
-  }
-
-  if (req.method !== "POST") {
-    return res.status(405).json({
-      error: "Método não permitido"
-    });
-  }
-
+  res.setHeader("Cache-Control", "no-store");
+  if (req.method === "GET") return res.status(200).json({ ok: true, message: "Webhook Victor Store ativo" });
+  if (req.method !== "POST") return res.status(405).json({ error: "Método não permitido" });
   try {
-    const secret =
-      process.env.MERCADO_PAGO_WEBHOOK_SECRET;
-    const token =
-      process.env.MERCADO_PAGO_ACCESS_TOKEN;
-    const url =
-      process.env.SUPABASE_URL;
-    const chave =
-      process.env.SUPABASE_SECRET_KEY;
-
-    if (!secret || !token || !url || !chave) {
-      console.error("Webhook com configuração incompleta.");
-
-      return res.status(503).json({
-        error: "Webhook não configurado."
-      });
+    const secret = process.env.MERCADO_PAGO_WEBHOOK_SECRET;
+    const token = process.env.MERCADO_PAGO_ACCESS_TOKEN;
+    const url = process.env.SUPABASE_URL, chave = process.env.SUPABASE_SECRET_KEY;
+    if (!secret || !token || !url || !chave) throw new FalhaPagamento("Webhook não configurado.");
+    const assinatura = texto(req.headers["x-signature"]), requestId = texto(req.headers["x-request-id"]);
+    const id = texto(req.query?.["data.id"]);
+    if (!assinatura || !requestId || !id) throw new FalhaPagamento("Webhook sem autenticação.", 401);
+    const partes = assinatura.split(",").map(p => p.trim());
+    const ts = partes.find(p => p.startsWith("ts="))?.slice(3), v1 = partes.find(p => p.startsWith("v1="))?.slice(3);
+    if (!ts || !/^\d+$/.test(ts) || !/^[a-fA-F0-9]{64}$/.test(v1 || "")) throw new FalhaPagamento("Assinatura inválida.", 401);
+    const esperado = crypto.createHmac("sha256", secret).update(`id:${id.toLowerCase()};request-id:${requestId};ts:${ts};`).digest();
+    if (!crypto.timingSafeEqual(esperado, Buffer.from(v1, "hex"))) throw new FalhaPagamento("Assinatura inválida.", 401);
+    if (req.body?.data?.id && String(req.body.data.id).toLowerCase() !== id.toLowerCase()) throw new FalhaPagamento("Identificadores divergentes.", 400);
+    const tipo = texto(req.body?.type) || texto(req.query?.type) || (/^ORD[a-zA-Z0-9]+$/.test(id) ? "order" : "");
+    if (!["order", "payment"].includes(tipo)) return res.status(200).json({ received: true, ignored: true });
+    const db = createClient(url, chave, { auth: { persistSession: false, autoRefreshToken: false } });
+    if (tipo === "payment") {
+      if (!/^\d+$/.test(id)) throw new FalhaPagamento("Pagamento inválido.", 400);
+      const p = await consultarMP(`/v1/payments/${id}`, token);
+      if (String(p.id) !== id) throw new FalhaPagamento("Pagamento divergente.", 400);
+      if (!texto(p.external_reference).startsWith("victor-store-")) return res.status(200).json({ received: true, ignored: true });
+      const pedido = await buscarPedido(db, "referencia", p.external_reference);
+      if (pedido.checkout_tipo !== "checkout_pro") return res.status(200).json({ received: true, ignored: true });
+      return res.status(200).json(await sincronizarPro(db, pedido, token, id));
     }
-
-    const assinatura = texto(req.headers["x-signature"]);
-    const requestId = texto(req.headers["x-request-id"]);
-    const dataId = texto(req.query?.["data.id"]);
-
-    if (!assinatura || !requestId || !dataId) {
-      return res.status(401).json({
-        error: "Webhook sem autenticação."
-      });
-    }
-
-    const partes = assinatura
-      .split(",")
-      .map(parte => parte.trim());
-
-    const ts = partes
-      .find(parte => parte.startsWith("ts="))
-      ?.slice(3);
-
-    const v1 = partes
-      .find(parte => parte.startsWith("v1="))
-      ?.slice(3);
-
-    if (
-      !ts ||
-      !/^\d+$/.test(ts) ||
-      !v1 ||
-      !/^[a-fA-F0-9]{64}$/.test(v1)
-    ) {
-      return res.status(401).json({
-        error: "Assinatura inválida."
-      });
-    }
-
-    const manifest =
-      `id:${dataId.toLowerCase()};request-id:${requestId};ts:${ts};`;
-
-    const esperada = crypto
-      .createHmac("sha256", secret)
-      .update(manifest)
-      .digest();
-
-    if (
-      !crypto.timingSafeEqual(
-        esperada,
-        Buffer.from(v1, "hex")
-      )
-    ) {
-      return res.status(401).json({
-        error: "Assinatura inválida."
-      });
-    }
-
-    if (req.body?.type && req.body.type !== "order") {
-      return res.status(200).json({
-        received: true,
-        ignored: true
-      });
-    }
-
-    if (!/^ORD[a-zA-Z0-9]+$/.test(dataId)) {
-      return res.status(400).json({
-        error: "Identificador de order inválido."
-      });
-    }
-
-    if (
-      req.body?.data?.id &&
-      String(req.body.data.id).toLowerCase() !==
-        dataId.toLowerCase()
-    ) {
-      return res.status(400).json({
-        error: "Identificadores divergentes."
-      });
-    }
-
-    // Consulta o status diretamente no Mercado Pago.
-    const resposta = await fetch(
-      `https://api.mercadopago.com/v1/orders/${encodeURIComponent(dataId)}`,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`
-        },
-        signal: AbortSignal.timeout(10000)
-      }
-    );
-
-    if (!resposta.ok) {
-      console.error(
-        "Consulta da order falhou:",
-        resposta.status
-      );
-
-      return res.status(503).json({
-        error: "Não foi possível consultar o pagamento."
-      });
-    }
-
-    const order = await resposta.json();
-
-    if (
-      String(order.id).toLowerCase() !==
-      dataId.toLowerCase()
-    ) {
-      return res.status(400).json({
-        error: "Order divergente."
-      });
-    }
-
-    const referencia = texto(order.external_reference);
-
-    if (!referencia.startsWith("victor-store-")) {
-      return res.status(200).json({
-        received: true,
-        ignored: true
-      });
-    }
-
-    const supabase = createClient(url, chave, {
-      auth: {
-        persistSession: false,
-        autoRefreshToken: false
-      }
-    });
-
-    const { data: pedido, error: erroBusca } =
-      await supabase
-        .from("pedidos")
-        .select(`
-          id,
-          referencia,
-          mercado_pago_order_id,
-          mercado_pago_payment_id,
-          total,
-          status,
-          status_pagamento,
-          updated_at
-        `)
-        .eq("referencia", referencia)
-        .maybeSingle();
-
-    if (erroBusca || !pedido) {
-      console.error("Pedido não localizado.");
-
-      return res.status(503).json({
-        error: "Pedido não localizado."
-      });
-    }
-
-    if (
-      pedido.mercado_pago_order_id &&
-      pedido.mercado_pago_order_id !== String(order.id)
-    ) {
-      return res.status(409).json({
-        error: "Pagamento não corresponde ao pedido."
-      });
-    }
-
-    const total = Number(order.total_amount);
-
-    if (
-      !Number.isFinite(total) ||
-      Math.round(total * 100) !==
-        Math.round(Number(pedido.total) * 100)
-    ) {
-      return res.status(409).json({
-        error: "Valor do pagamento divergente."
-      });
-    }
-
+    if (!/^ORD[a-zA-Z0-9]+$/.test(id)) throw new FalhaPagamento("Identificador de order inválido.", 400);
+    const order = await consultarMP(`/v1/orders/${encodeURIComponent(id)}`, token);
+    if (String(order.id).toLowerCase() !== id.toLowerCase()) throw new FalhaPagamento("Order divergente.", 400);
+    if (!texto(order.external_reference).startsWith("victor-store-")) return res.status(200).json({ received: true, ignored: true });
+    const pedido = await buscarPedido(db, "referencia", order.external_reference);
+    if (pedido.checkout_tipo !== "pix_orders") throw new FalhaPagamento("Tipo de checkout divergente.", 409);
+    if (pedido.mercado_pago_order_id && pedido.mercado_pago_order_id !== String(order.id)) throw new FalhaPagamento("Pagamento não corresponde ao pedido.", 409);
+    conferirValor(order.total_amount, pedido.total);
     const pagamentos = order.transactions?.payments;
-
-    if (
-      !Array.isArray(pagamentos) ||
-      pagamentos.length !== 1
-    ) {
-      return res.status(409).json({
-        error: "Transações incompatíveis com este pedido."
-      });
-    }
-
-    const status = statusDaLoja(order);
-
-    const posteriores = [
-      "pago",
-      "parcialmente_reembolsado",
-      "reembolsado",
-      "em_contestacao"
-    ];
-
-    // Impede que uma leitura antiga reabra um pedido pago.
-    if (
-      posteriores.includes(pedido.status) &&
-      !posteriores.includes(status)
-    ) {
-      return res.status(200).json({
-        received: true,
-        ignored: true
-      });
-    }
-
-    if (
-      ["reembolsado", "em_contestacao"].includes(
-        pedido.status
-      ) &&
-      status !== pedido.status
-    ) {
-      return res.status(200).json({
-        received: true,
-        ignored: true
-      });
-    }
-
-    if (
-      pedido.status === "parcialmente_reembolsado" &&
-      status === "pago"
-    ) {
-      return res.status(200).json({
-        received: true,
-        ignored: true
-      });
-    }
-
-    const statusPagamento = texto(order.status);
-
-    const pagamentoId = pagamentos[0]?.id
-      ? String(pagamentos[0].id)
-      : null;
-
-    const semAlteracao =
-      pedido.status === status &&
-      pedido.status_pagamento === statusPagamento &&
-      pedido.mercado_pago_order_id === String(order.id) &&
-      pedido.mercado_pago_payment_id === pagamentoId;
-
-    if (!semAlteracao) {
-      const { data: atualizados, error: erroUpdate } =
-        await supabase
-          .from("pedidos")
-          .update({
-            mercado_pago_order_id: String(order.id),
-            mercado_pago_payment_id: pagamentoId,
-            status,
-            status_pagamento: statusPagamento
-          })
-          .eq("id", pedido.id)
-          .eq("updated_at", pedido.updated_at)
-          .select("id");
-
-      if (erroUpdate || !atualizados?.length) {
-        return res.status(503).json({
-          error: "Não foi possível atualizar o pedido."
-        });
-      }
-
-      console.log(
-        "Status do pedido atualizado:",
-        pedido.id,
-        status
-      );
-    }
-
-    // Executa também em notificações repetidas.
-    // A função SQL impede descontar duas vezes.
-    if (status === "pago") {
-      const { data: baixa, error: erroBaixa } =
-        await supabase.rpc("baixar_estoque_pedido", {
-          p_pedido_id: pedido.id
-        });
-
-      if (erroBaixa || baixa?.ok !== true) {
-        console.error(
-          "Pagamento registrado; baixa de estoque pendente:",
-          pedido.id,
-          erroBaixa?.message || "Resposta inválida."
-        );
-
-        return res.status(503).json({
-          received: true,
-          error: "Pagamento registrado; baixa de estoque pendente."
-        });
-      }
-
-      console.log(
-        "Estoque do pedido:",
-        pedido.id,
-        baixa.ja_baixado
-          ? "Baixa já realizada anteriormente."
-          : "Baixa realizada."
-      );
-
-      return res.status(200).json({
-        received: true,
-        estoque: baixa.ja_baixado
-          ? "ja_baixado"
-          : "baixado"
-      });
-    }
-
-    return res.status(200).json({
-      received: true,
-      unchanged: semAlteracao
-    });
+    if (!Array.isArray(pagamentos) || pagamentos.length !== 1) throw new FalhaPagamento("Transações incompatíveis com este pedido.", 409);
+    return res.status(200).json(await aplicarStatus(db, pedido, {
+      mercado_pago_order_id: String(order.id), mercado_pago_payment_id: pagamentos[0]?.id ? String(pagamentos[0].id) : null,
+      status: statusOrder(order), status_pagamento: texto(order.status)
+    }));
   } catch (erro) {
-    console.error("Erro no webhook:", erro.message);
-
-    return res.status(503).json({
-      error: "Falha temporária no webhook."
-    });
+    console.error("Webhook:", erro.message);
+    return res.status(erro instanceof FalhaPagamento ? erro.status : 503).json({ error: erro instanceof FalhaPagamento ? erro.message : "Falha temporária no webhook." });
   }
 }
