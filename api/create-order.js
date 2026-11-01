@@ -1,3 +1,4 @@
+import crypto from "node:crypto";
 import { createClient } from "@supabase/supabase-js";
 
 const escapar = (valor) =>
@@ -29,6 +30,10 @@ export default async function handler(req, res) {
 
   try {
     const accessToken = process.env.MERCADO_PAGO_ACCESS_TOKEN;
+
+    if (!process.env.MERCADO_PAGO_WEBHOOK_SECRET) {
+      return res.status(503).json({ error: "Consulta de pagamento não configurada." });
+    }
 
     if (!accessToken) {
       return res.status(500).json({
@@ -254,7 +259,8 @@ export default async function handler(req, res) {
     const { error: erroVinculo } = await supabase
       .from("pedidos")
       .update(atualizacao)
-      .eq("id", pedidoLocalId);
+      .eq("id", pedidoLocalId)
+      .eq("status", "pendente");
 
     if (erroVinculo) {
       console.error(
@@ -504,7 +510,13 @@ export default async function handler(req, res) {
 
     return res.status(resposta.status).json({
       ...dados,
-      pedido_local_id: pedidoLocalId
+      pedido_local_id: pedidoLocalId,
+      consulta_token: resposta.ok ? (() => {
+        const expira = Math.floor(Date.now() / 1000) + 86400;
+        const assinatura = crypto.createHmac("sha256", process.env.MERCADO_PAGO_WEBHOOK_SECRET)
+          .update(`${pedidoLocalId}:${expira}`).digest("hex");
+        return `${expira}.${assinatura}`;
+      })() : null
     });
   } catch (erro) {
     console.error(
