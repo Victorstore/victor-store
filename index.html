@@ -1703,7 +1703,36 @@ const resumoPedido = carrinho.map((item) => {
             }
             if (["cancelado", "expirado", "falhou", "reembolsado", "em_contestacao", "parcialmente_reembolsado"].includes(resultado.status)) {
                 consultaEncerrada = true;
-                avisoPagamento.textContent = "Situação do pedido: " + resultado.status.replaceAll("_", " ") + ". Entre em contato com a loja se precisar de ajuda.";
+                const doc = janelaPix.document;
+                doc.body.innerHTML = "";
+                doc.body.style.cssText = "margin:0;padding:30px 20px;background:#f3f4f6;color:#171717;font-family:Arial,sans-serif;text-align:center;";
+                const caixa = doc.createElement("main");
+                caixa.style.cssText = "max-width:560px;margin:50px auto;background:white;padding:32px;border-radius:16px;";
+                const titulo = doc.createElement("h1");
+                const titulos = {
+                    expirado: "Pix expirado", cancelado: "Pagamento cancelado",
+                    falhou: "Pagamento não concluído", reembolsado: "Pagamento reembolsado",
+                    em_contestacao: "Pagamento em contestação",
+                    parcialmente_reembolsado: "Pagamento parcialmente reembolsado"
+                };
+                titulo.textContent = titulos[resultado.status];
+                titulo.style.color = "#9a3412";
+                const mensagem = doc.createElement("p");
+                mensagem.textContent = ["expirado", "cancelado", "falhou"].includes(resultado.status)
+                    ? "Este código Pix não está mais disponível para pagamento. Volte ao carrinho para conferir os itens e iniciar uma nova compra."
+                    : "Entre em contato com a loja para conferir a situação deste pedido.";
+                const registro = doc.createElement("p");
+                registro.textContent = "Pedido: " + dados.pedido_local_id;
+                registro.style.overflowWrap = "anywhere";
+                const nota = doc.createElement("p");
+                nota.textContent = "Seu carrinho foi preservado.";
+                const voltar = doc.createElement("button");
+                voltar.textContent = "Voltar para o carrinho";
+                voltar.style.cssText = "background:#e50914;color:white;border:0;border-radius:8px;padding:14px 24px;cursor:pointer;font-size:16px;";
+                voltar.onclick = () => { painelPix.remove(); abrirCarrinho(); };
+                caixa.setAttribute("role", "status");
+                caixa.append(titulo, mensagem, registro, nota, voltar);
+                doc.body.append(caixa);
                 return;
             }
             avisoPagamento.textContent = "Aguardando pagamento. A confirmação será consultada automaticamente.";
