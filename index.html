@@ -511,6 +511,11 @@
         <option value="">Selecione</option>
     </select>
 </div>
+                <div id="modal-quantidade-area" style="display:none;margin:16px 0;">
+                    <label for="modal-quantidade"><strong>Quantidade:</strong></label>
+                    <input id="modal-quantidade" type="number" min="1" step="1" value="1"
+                        style="display:block;width:110px;padding:12px;margin-top:8px;border-radius:8px;border:1px solid #555;background:#090909;color:white;font:inherit;">
+                </div>
                 <button id="modal-add" class="btn primary" type="button">
                     Adicionar ao carrinho
                 </button>
@@ -595,7 +600,7 @@
             salvarCarrinho();
             abrirCarrinho();
         }
-function adicionarVariacaoAoCarrinho(indice, variacao) {
+function adicionarVariacaoAoCarrinho(indice, variacao, quantidade = 1) {
     const produto = produtoPorIndice(indice);
     if (!produto || !variacao) return;
 
@@ -604,22 +609,20 @@ function adicionarVariacaoAoCarrinho(indice, variacao) {
         item.variacao_id === variacao.id
     );
 
+    const estoque = Number(variacao.estoque);
+    if (!Number.isSafeInteger(quantidade) || quantidade < 1 ||
+        !Number.isFinite(estoque) || quantidade + (existente?.quantidade || 0) > estoque) {
+        alert("Confira a quantidade desejada e o estoque disponível, incluindo os itens já no carrinho.");
+        return;
+    }
     if (existente) {
-        if (existente.quantidade >= Number(variacao.estoque)) {
-            alert("Você atingiu a quantidade disponível desta variação.");
-            return;
-        }
-
-        existente.quantidade += 1;
+        existente.quantidade += quantidade;
+        existente.estoque_variacao = estoque;
     } else {
         carrinho.push({
-            indice,
-            quantidade: 1,
-            variacao_id: variacao.id,
-            faixa: variacao.faixa,
-            cor: variacao.cor,
-            numero: variacao.numero,
-            estoque_variacao: Number(variacao.estoque)
+            indice, quantidade, variacao_id: variacao.id,
+            faixa: variacao.faixa, cor: variacao.cor, numero: variacao.numero,
+            estoque_variacao: estoque
         });
     }
 
@@ -807,7 +810,7 @@ cartTotal.textContent = dinheiro.format(total + freteCobrado);
                             </button>
 
                             <button class="btn primary add-cart-button" type="button"
-                                onclick="${temVariacoes ? `abrirDetalhes(${indice})` : `adicionarAoCarrinho(${indice})`}"
+                                onclick="${temVariacoes ? `abrirOpcoes(${indice})` : `adicionarAoCarrinho(${indice})`}"
                                 ${semEstoque ? "disabled" : ""}>
                                 ${temVariacoes ? "Ver opções" : (semEstoque ? "Indisponível" : "Adicionar ao carrinho")}
                             </button>
@@ -885,7 +888,7 @@ cartTotal.textContent = dinheiro.format(total + freteCobrado);
                             </p>
 
                           <button class="btn primary" type="button"
-    onclick="${temVariacoes ? `abrirDetalhes(${indice})` : `adicionarAoCarrinho(${indice})`}"
+    onclick="${temVariacoes ? `abrirOpcoes(${indice})` : `adicionarAoCarrinho(${indice})`}"
     ${!temVariacoes && estoque <= 0 ? "disabled" : ""}>
     ${temVariacoes ? "Ver opções" : (estoque <= 0 ? "Indisponível" : "Adicionar ao carrinho")}
 </button>
@@ -895,7 +898,10 @@ cartTotal.textContent = dinheiro.format(total + freteCobrado);
             }).join("");
         }
 
-       async function abrirDetalhes(indice) {
+       let aberturaProduto = 0;
+       function abrirOpcoes(indice) { return abrirDetalhes(indice, true); }
+       async function abrirDetalhes(indice, mostrarOpcoes = false) {
+    const aberturaAtual = ++aberturaProduto;
     const produto = produtoPorIndice(indice);
     if (!produto) return;
 
@@ -916,6 +922,21 @@ cartTotal.textContent = dinheiro.format(total + freteCobrado);
     const selectFaixa = document.getElementById("modal-faixa");
     const selectCor = document.getElementById("modal-cor");
     const selectNumero = document.getElementById("modal-numero");
+
+    const quantidadeArea = document.getElementById("modal-quantidade-area");
+    const quantidadeInput = document.getElementById("modal-quantidade");
+    quantidadeInput.value = "1";
+    quantidadeInput.disabled = true;
+    quantidadeInput.removeAttribute("max");
+    quantidadeArea.style.display = mostrarOpcoes ? "block" : "none";
+    document.getElementById("modal-description").style.display = mostrarOpcoes ? "none" : "block";
+    modalStock.style.display = mostrarOpcoes ? "block" : "none";
+    botao.style.display = mostrarOpcoes ? "inline-block" : "none";
+    areaVariacoes.style.display = "none";
+    document.getElementById("product-modal").classList.add("open");
+    document.getElementById("product-modal").setAttribute("aria-hidden", "false");
+    document.body.classList.add("no-scroll");
+    if (!mostrarOpcoes) return;
 
     // Produtos com variações: Chuteira Society e Chuteira Futsal
     if (Number(produto.id) === 9 || Number(produto.id) === 10) {
@@ -940,6 +961,7 @@ cartTotal.textContent = dinheiro.format(total + freteCobrado);
             );
 
             const dados = await resposta.json();
+            if (aberturaAtual !== aberturaProduto) return;
 
             if (!resposta.ok || !dados.ok || !Array.isArray(dados.variacoes)) {
                 throw new Error("Não foi possível carregar as variações.");
@@ -962,6 +984,8 @@ cartTotal.textContent = dinheiro.format(total + freteCobrado);
 
             selectFaixa.onchange = () => {
                 const faixa = selectFaixa.value;
+                quantidadeInput.disabled = true;
+                quantidadeInput.value = "1";
 
                 selectCor.innerHTML =
                     `<option value="">Selecione</option>`;
@@ -995,7 +1019,11 @@ cartTotal.textContent = dinheiro.format(total + freteCobrado);
 
             selectCor.onchange = () => {
                 const faixa = selectFaixa.value;
+                quantidadeInput.disabled = true;
+                quantidadeInput.value = "1";
                 const cor = selectCor.value;
+                quantidadeInput.disabled = true;
+                quantidadeInput.value = "1";
 
                 selectNumero.innerHTML =
                     `<option value="">Selecione</option>`;
@@ -1030,7 +1058,11 @@ cartTotal.textContent = dinheiro.format(total + freteCobrado);
 
             selectNumero.onchange = () => {
                 const faixa = selectFaixa.value;
+                quantidadeInput.disabled = true;
+                quantidadeInput.value = "1";
                 const cor = selectCor.value;
+                quantidadeInput.disabled = true;
+                quantidadeInput.value = "1";
                 const numero = selectNumero.value;
 
                 if (!numero) {
@@ -1056,12 +1088,15 @@ cartTotal.textContent = dinheiro.format(total + freteCobrado);
                 modalStock.textContent =
                     `Estoque disponível: ${variacao.estoque}`;
 
-                botao.disabled = false;
+                quantidadeInput.disabled = Number(variacao.estoque) <= 0;
+                quantidadeInput.max = String(variacao.estoque);
+                botao.disabled = Number(variacao.estoque) <= 0;
 botao.textContent = "Adicionar ao carrinho";
-botao.onclick = () => adicionarVariacaoAoCarrinho(indice, variacao);
+botao.onclick = () => adicionarVariacaoAoCarrinho(indice, variacao, Number(quantidadeInput.value));
             };
 
         } catch (erro) {
+            if (aberturaAtual !== aberturaProduto) return;
             console.error("Erro ao carregar variações:", erro);
 
             modalStock.textContent =
@@ -1096,6 +1131,7 @@ botao.onclick = () => adicionarVariacaoAoCarrinho(indice, variacao);
 }
 
         function fecharDetalhes() {
+            aberturaProduto++;
             document.getElementById("product-modal").classList.remove("open");
             document.getElementById("product-modal").setAttribute("aria-hidden", "true");
             document.body.classList.remove("no-scroll");
